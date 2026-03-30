@@ -1,15 +1,11 @@
 import pg from "pg";
-import { config, requiredDbEnv } from "../constants.js";
 
 const { Pool } = pg;
 
-for (const envKey of requiredDbEnv) {
-  if (!process.env[envKey]) {
-    throw new Error(`Missing required environment variable: ${envKey}`);
-  }
-}
 
-export const pool = new Pool(config.db);
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 export const query = (text, params = []) => pool.query(text, params);
 
