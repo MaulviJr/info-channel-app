@@ -15,31 +15,37 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 
 app.use(cookieParser());
 app.use(express.static("public"));
-app.get("/health", (req, res) => {
-	res.status(200).json({
-		status: "ok",
-		service: "info-backend",
-		uptime: process.uptime(),
-		timestamp: new Date().toISOString(),
-	});
-});
+//imported routes
+import userRouter from './routes/user.routes.js';
 
-app.get("/health/db", async (req, res) => {
-	try {
-		const result = await query("SELECT NOW() AS server_time");
-		res.status(200).json({
-			status: "ok",
-			database: "connected",
-			serverTime: result.rows[0].server_time,
-		});
-	} catch (error) {
-		res.status(500).json({
-			status: "error",
-			database: "disconnected",
-			message: error.message,
-		});
-	}
-});
+//routes.declaratoin
+app.use("/api/v1/users", userRouter);
+
+// app.get("/health", (req, res) => {
+// 	res.status(200).json({
+// 		status: "ok",
+// 		service: "info-backend",
+// 		uptime: process.uptime(),
+// 		timestamp: new Date().toISOString(),
+// 	});
+// });
+
+// app.get("/health/db", async (req, res) => {
+// 	try {
+// 		const result = await query("SELECT NOW() AS server_time");
+// 		res.status(200).json({
+// 			status: "ok",
+// 			database: "connected",
+// 			serverTime: result.rows[0].server_time,
+// 		});
+// 	} catch (error) {
+// 		res.status(500).json({
+// 			status: "error",
+// 			database: "disconnected",
+// 			message: error.message,
+// 		});
+// 	}
+// });
 
 export default app;
 
