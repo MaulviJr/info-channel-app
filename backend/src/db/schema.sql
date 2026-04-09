@@ -9,6 +9,28 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS student_profiles (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    profile_picture_url VARCHAR(255),
+    cell_number VARCHAR(20),
+    whatsapp_number VARCHAR(20),
+    date_of_birth DATE,
+    education VARCHAR(100),
+    cnic VARCHAR(20) UNIQUE,
+    religion VARCHAR(50),
+    father_name VARCHAR(255),
+    father_cell_number VARCHAR(20),
+    father_whatsapp_number VARCHAR(20),
+    father_cnic VARCHAR(20),
+    father_occupation VARCHAR(100),
+    address TEXT,
+    lead_source VARCHAR(50) CHECK (lead_source IN ('Sign Board', 'Social Media', 'Friends', 'Teacher', 'Other')),
+
+    gr_number VARCHAR(50) UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title VARCHAR(255) NOT NULL,
@@ -83,3 +105,14 @@ ON section_lectures(course_id, position);
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cert_student_course
 ON certificates(student_id, course_id);
+
+
+ALTER TABLE enrollments
+ADD COLUMN IF NOT EXISTS board_registration VARCHAR(50) CHECK (board_registration IN ('SDC', 'SBTE', 'None')),
+ADD COLUMN IF NOT EXISTS batch_name VARCHAR(100),
+ADD COLUMN IF NOT EXISTS preferred_timing VARCHAR(100),
+ADD COLUMN IF NOT EXISTS admission_fee NUMERIC(10, 2) DEFAULT 0.00,
+ADD COLUMN IF NOT EXISTS monthly_fee NUMERIC(10, 2) DEFAULT 0.00,
+ADD COLUMN IF NOT EXISTS lumpsum_fee NUMERIC(10, 2) DEFAULT 0.00,
+ADD COLUMN IF NOT EXISTS slip_number VARCHAR(100),
+ADD COLUMN IF NOT EXISTS remarks TEXT;

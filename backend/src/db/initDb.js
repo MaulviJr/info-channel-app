@@ -7,6 +7,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const init = async () => {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is not set. Check backend/.env");
+  }
+
   const schemaPath = path.join(__dirname, "schema.sql");
   const schemaSql = await fs.readFile(schemaPath, "utf8");
 
