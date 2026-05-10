@@ -1,4 +1,3 @@
-import fs from "fs/promises";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -7,6 +6,16 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { pool } from "../db/pool.js";
 import { uploadImage } from "../utils/cloudinary.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/tokens.js";
+import {
+    createStudentProfile,
+    createUser,
+    findOneStudentProfileByCnic,
+    findOneStudentProfileByGrNumber,
+    findOneUserByEmail,
+    findOneUserByEmailMinimal,
+    updateUserRefreshToken,
+} from "../repositories/user.repository.js";
 
 const emptyToUndefined = (value) => {
     if (typeof value !== "string") {
@@ -77,30 +86,21 @@ const registerUser = asyncHandler(async (req, res) => {
     let uploadedProfileUrl = profilePictureUrl;
 
     if (req.file?.path) {
-        const uploadResult = await uploadImage(req.file.path, {
-            public_id: `profiles/${email.replace(/[^a-zA-Z0-9-_]/g, "-")}-${Date.now()}`,
-        });
-        uploadedProfileUrl = uploadResult.secure_url;
-        await fs.unlink(req.file.path).catch(() => null);
+        const uploadResult = await uploadImage(req.file.path);
+        uploadedProfileUrl = uploadResult?.secure_url || uploadedProfileUrl;
     }
 
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
 
-        const existingUser = await client.query(
-            "SELECT id FROM users WHERE email = $1",
-            [email]
-        );
+        const existingUser = await findOneUserByEmailMinimal(client, email);
         if (existingUser.rowCount > 0) {
             throw new ApiError(409, "Email already exists");
         }
 
         if (cnic) {
-            const existingCnic = await client.query(
-                "SELECT user_id FROM student_profiles WHERE cnic = $1",
-                [cnic]
-            );
+            const existingCnic = await findOneStudentProfileByCnic(client, cnic);
             if (existingCnic.rowCount > 0) {
                 throw new ApiError(409, "CNIC already exists");
             }
@@ -109,9 +109,9 @@ const registerUser = asyncHandler(async (req, res) => {
         let grNumber = null;
         for (let attempt = 0; attempt < 5; attempt += 1) {
             const candidate = generateGrNumber();
-            const existingGr = await client.query(
-                "SELECT user_id FROM student_profiles WHERE gr_number = $1",
-                [candidate]
+            const existingGr = await findOneStudentProfileByGrNumber(
+                client,
+                candidate
             );
             if (existingGr.rowCount === 0) {
                 grNumber = candidate;
@@ -125,33 +125,34 @@ const registerUser = asyncHandler(async (req, res) => {
 
         const passwordHash = await bcrypt.hash(password, 10);
 
-        const userInsert = await client.query(
-            "INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at",
-            [name, email, passwordHash, role]
+        const userInsert = await createUser(
+            client,
+            name,
+            email,
+            passwordHash,
+            role
         );
 
         const user = userInsert.rows[0];
 
-        const profileInsert = await client.query(
-            "INSERT INTO student_profiles (user_id, profile_picture_url, cell_number, whatsapp_number, date_of_birth, education, cnic, religion, father_name, father_cell_number, father_whatsapp_number, father_cnic, father_occupation, address, lead_source, gr_number) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING profile_picture_url, cell_number, whatsapp_number, date_of_birth, education, cnic, religion, father_name, father_cell_number, father_whatsapp_number, father_cnic, father_occupation, address, lead_source, gr_number",
-            [
-                user.id,
-                uploadedProfileUrl || null,
-                cellNumber || null,
-                whatsappNumber || null,
-                dateOfBirth || null,
-                education || null,
-                cnic || null,
-                religion || null,
-                fatherName || null,
-                fatherCellNumber || null,
-                fatherWhatsappNumber || null,
-                fatherCnic || null,
-                fatherOccupation || null,
-                address || null,
-                leadSource || null,
-                grNumber,
-            ]
+        const profileInsert = await createStudentProfile(
+            client,
+            user.id,
+            uploadedProfileUrl || null,
+            cellNumber || null,
+            whatsappNumber || null,
+            dateOfBirth || null,
+            education || null,
+            cnic || null,
+            religion || null,
+            fatherName || null,
+            fatherCellNumber || null,
+            fatherWhatsappNumber || null,
+            fatherCnic || null,
+            fatherOccupation || null,
+            address || null,
+            leadSource || null,
+            grNumber
         );
 
         await client.query("COMMIT");
@@ -189,7 +190,73 @@ const registerUser = asyncHandler(async (req, res) => {
     }
 });
 
+const loginSchema = z.object({
+    email: z.string().trim().email("Invalid email"),
+    password: z.string().min(1, "Password is required"),
+});
+
+const loginUser = asyncHandler(async (req, res) => {
+    const parsed = loginSchema.safeParse(req.body);
+    console.log("Login request body:", req.body);
+    if (!parsed.success) {
+        throw new ApiError(400, "Validation failed", parsed.error.issues);
+    }
+
+    const { email, password } = parsed.data;
+
+    const client = await pool.connect();
+    try {
+        const userResult = await findOneUserByEmail(client, email);
+
+        if (userResult.rowCount === 0) {
+            throw new ApiError(401, "Invalid email or password");
+        }
+
+        const user = userResult.rows[0];
+
+        const passwordMatches = await bcrypt.compare(password, user.password_hash);
+        if (!passwordMatches) {
+            throw new ApiError(401, "Invalid email or password");
+        }
+
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+        const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        await updateUserRefreshToken(
+            client,
+            user.id,
+            refreshToken,
+            refreshTokenExpiresAt
+        );
+        const options = {
+            httpOnly: true,
+            secure: true,
+        };
+
+        res.status(200)
+        .cookie("AccessToken", accessToken, options)
+        .cookie("RefreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(200, {
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
+                accessToken,
+                refreshToken,
+            }, "Login successful")
+        );
+    } finally {
+        client.release();
+    }
+});
+
+
 
 export {
     registerUser,
+    loginUser,
 }

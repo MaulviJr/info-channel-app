@@ -7,9 +7,9 @@
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
     "start": "node src/index.js",
     "db:init": "node src/db/initDb.js",
-  "migrate:up": "node-pg-migrate up -m src/db/migrations",
-"migrate:down": "node-pg-migrate down -m src/db/migrations",
-"migrate:create": "node-pg-migrate create -m src/db/migrations"
+    "migrate:up": "node-pg-migrate up -m src/db/migrations",
+    "migrate:down": "node-pg-migrate down -m src/db/migrations",
+    "migrate:create": "node-pg-migrate create -m src/db/migrations"
   },
   "keywords": [
     "backend",
@@ -30,6 +30,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
     "pg": "^8.20.0",
     "zod": "^3.25.76"

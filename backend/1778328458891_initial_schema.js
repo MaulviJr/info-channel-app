@@ -1,4 +1,13 @@
+export const up = (pgm) => {
+  pgm.sql(`
+-- ==========================================
+-- Extensions
+-- ==========================================
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- ==========================================
+-- Tables
+-- ==========================================
 
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -25,7 +34,6 @@ CREATE TABLE IF NOT EXISTS student_profiles (
     father_occupation VARCHAR(100),
     address TEXT,
     lead_source VARCHAR(50) CHECK (lead_source IN ('Sign Board', 'Social Media', 'Friends', 'Teacher', 'Other')),
-
     gr_number VARCHAR(50) UNIQUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -48,6 +56,15 @@ CREATE TABLE IF NOT EXISTS enrollments (
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed', 'cancelled')),
     enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    -- Columns previously added via ALTER TABLE
+    board_registration VARCHAR(50) CHECK (board_registration IN ('SDC', 'SBTE', 'None')),
+    batch_name VARCHAR(100),
+    preferred_timing VARCHAR(100),
+    admission_fee NUMERIC(10, 2) DEFAULT 0.00,
+    monthly_fee NUMERIC(10, 2) DEFAULT 0.00,
+    lumpsum_fee NUMERIC(10, 2) DEFAULT 0.00,
+    slip_number VARCHAR(100),
+    remarks TEXT,
     UNIQUE (student_id, course_id)
 );
 
@@ -89,6 +106,11 @@ CREATE TABLE IF NOT EXISTS certificates (
     issued_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ==========================================
+-- Indexes
+-- ==========================================
+
+-- Standard Indexes
 CREATE INDEX IF NOT EXISTS idx_courses_instructor ON courses(instructor_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_student ON enrollments(student_id);
 CREATE INDEX IF NOT EXISTS idx_enrollments_course ON enrollments(course_id);
@@ -100,19 +122,40 @@ CREATE INDEX IF NOT EXISTS idx_progress_lecture ON progress(lecture_id);
 CREATE INDEX IF NOT EXISTS idx_certificates_student ON certificates(student_id);
 CREATE INDEX IF NOT EXISTS idx_certificates_course ON certificates(course_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_lectures_course_position
-ON section_lectures(course_id, position);
+-- Unique Indexes
+CREATE UNIQUE INDEX IF NOT EXISTS uq_lectures_course_position ON section_lectures(course_id, position);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_cert_student_course ON certificates(student_id, course_id);
+  `);
+};
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_cert_student_course
-ON certificates(student_id, course_id);
+export const down = (pgm) => {
+  pgm.sql(`
+-- Drop Indexes (Optional, as dropping tables cascades index removal,
+-- but explicitly stating them is good practice for clean 'down' scripts)
+DROP INDEX IF EXISTS uq_cert_student_course;
+DROP INDEX IF EXISTS uq_lectures_course_position;
+DROP INDEX IF EXISTS idx_certificates_course;
+DROP INDEX IF EXISTS idx_certificates_student;
+DROP INDEX IF EXISTS idx_progress_lecture;
+DROP INDEX IF EXISTS idx_progress_student;
+DROP INDEX IF EXISTS idx_lectures_course;
+DROP INDEX IF EXISTS idx_payments_course;
+DROP INDEX IF EXISTS idx_payments_student;
+DROP INDEX IF EXISTS idx_enrollments_course;
+DROP INDEX IF EXISTS idx_enrollments_student;
+DROP INDEX IF EXISTS idx_courses_instructor;
 
+-- Drop Tables (Must be in reverse dependency order)
+DROP TABLE IF EXISTS certificates;
+DROP TABLE IF EXISTS progress;
+DROP TABLE IF EXISTS section_lectures;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS enrollments;
+DROP TABLE IF EXISTS courses;
+DROP TABLE IF EXISTS student_profiles;
+DROP TABLE IF EXISTS users;
 
-ALTER TABLE enrollments
-ADD COLUMN IF NOT EXISTS board_registration VARCHAR(50) CHECK (board_registration IN ('SDC', 'SBTE', 'None')),
-ADD COLUMN IF NOT EXISTS batch_name VARCHAR(100),
-ADD COLUMN IF NOT EXISTS preferred_timing VARCHAR(100),
-ADD COLUMN IF NOT EXISTS admission_fee NUMERIC(10, 2) DEFAULT 0.00,
-ADD COLUMN IF NOT EXISTS monthly_fee NUMERIC(10, 2) DEFAULT 0.00,
-ADD COLUMN IF NOT EXISTS lumpsum_fee NUMERIC(10, 2) DEFAULT 0.00,
-ADD COLUMN IF NOT EXISTS slip_number VARCHAR(100),
-ADD COLUMN IF NOT EXISTS remarks TEXT;
+-- Drop Extensions
+DROP EXTENSION IF EXISTS pgcrypto;
+  `);
+};

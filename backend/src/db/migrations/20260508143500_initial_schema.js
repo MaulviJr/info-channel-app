@@ -125,7 +125,7 @@ CREATE INDEX IF NOT EXISTS idx_certificates_course ON certificates(course_id);
 -- Unique Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS uq_lectures_course_position ON section_lectures(course_id, position);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_cert_student_course ON certificates(student_id, course_id);
-  `);
+  `); 
 };
 
 export const down = (pgm) => {
