@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
 	createAdmin,
 	createTeacher,
+	getCurrentUser,
+	getProfileStatus,
 	loginUser,
 	registerUser,
 	updateStudentProfileHandler,
@@ -14,6 +16,10 @@ const router = Router();
 
 router.route("/register").post(upload.single("profilePicture"), registerUser);
 router.route("/login").post(loginUser);
+router.route("/me").get(verifyJWT, getCurrentUser);
+router
+	.route("/profile/status")
+	.get(verifyJWT, requireRole("student"), getProfileStatus);
 router
 	.route("/profile")
 	.put(

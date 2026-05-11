@@ -90,6 +90,24 @@ const generateGrNumber = () => {
     return `GR-${year}-${random}`;
 };
 
+const mapStudentProfile = (profile) => ({
+    profilePictureUrl: profile.profile_picture_url,
+    cellNumber: profile.cell_number,
+    whatsappNumber: profile.whatsapp_number,
+    dateOfBirth: profile.date_of_birth,
+    education: profile.education,
+    cnic: profile.cnic,
+    religion: profile.religion,
+    fatherName: profile.father_name,
+    fatherCellNumber: profile.father_cell_number,
+    fatherWhatsappNumber: profile.father_whatsapp_number,
+    fatherCnic: profile.father_cnic,
+    fatherOccupation: profile.father_occupation,
+    address: profile.address,
+    leadSource: profile.lead_source,
+    grNumber: profile.gr_number,
+});
+
 
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -336,23 +354,7 @@ const updateStudentProfileHandler = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 {
-                    profile: {
-                        profilePictureUrl: profile.profile_picture_url,
-                        cellNumber: profile.cell_number,
-                        whatsappNumber: profile.whatsapp_number,
-                        dateOfBirth: profile.date_of_birth,
-                        education: profile.education,
-                        cnic: profile.cnic,
-                        religion: profile.religion,
-                        fatherName: profile.father_name,
-                        fatherCellNumber: profile.father_cell_number,
-                        fatherWhatsappNumber: profile.father_whatsapp_number,
-                        fatherCnic: profile.father_cnic,
-                        fatherOccupation: profile.father_occupation,
-                        address: profile.address,
-                        leadSource: profile.lead_source,
-                        grNumber: profile.gr_number,
-                    },
+                    profile: mapStudentProfile(profile),
                     completion,
                 },
                 "Profile updated"
@@ -430,12 +432,205 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 });
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+    const client = await pool.connect();
+    try {
+        let profile = null;
+        let completion = null;
 
+        if (req.user.role === "student") {
+            const profileResult = await findStudentProfileByUserId(
+                client,
+                req.user.id
+            );
+            if (profileResult.rowCount > 0) {
+                const profileRow = profileResult.rows[0];
+                profile = mapStudentProfile(profileRow);
+                completion = getProfileCompletion(profileRow);
+            }
+        }
+
+        res.status(200).json(
+            new ApiResponse(200, {
+                user: {
+                    id: req.user.id,
+                    name: req.user.name,
+                    email: req.user.email,
+                    role: req.user.role,
+                },
+                profile,
+                completion,
+            })
+        );
+    } finally {
+        client.release();
+    }
+});
+
+const getProfileStatus = asyncHandler(async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const profileResult = await findStudentProfileByUserId(
+            client,
+            req.user.id
+        );
+        if (profileResult.rowCount === 0) {
+            throw new ApiError(404, "Student profile not found");
+        }
+
+        const profile = profileResult.rows[0];
+        const completion = getProfileCompletion(profile);
+
+        res.status(200).json(
+            new ApiResponse(200, {
+                completion,
+            })
+        );
+    } finally {
+        client.release();
+    }
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+    const client = await pool.connect();
+   //invalidate token in db 
+    const user=req.user;
+
+    try {
+        await updateUserRefreshToken(client, user.id, null, null);
+    }
+    catch (error) {    
+        
+        console.error("Error during logout:", error);
+    }     finally {
+        client.release();
+    }
+
+
+});
+
+const refreshTokenHandler = asyncHandler(async (req, res) => {
+    const token =
+        req.cookies?.RefreshToken ||
+        req.header("Authorization")?.replace("Bearer ", "");
+
+    // Validate token
+    // If valid, generate new access token and refresh token, update in DB, and return new tokens
+
+    if (!token) {
+        throw new ApiError(401, "Refresh token required");
+    }
+
+    const decodedtoken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+
+    const userEmail = decodedtoken?.email;
+    const client = await pool.connect();
+    const user = await findOneUserByEmailMinimal(client, userEmail);
+
+    if (user.rowCount === 0) {
+        client.release();
+        throw new ApiError(401, "Invalid refresh token");
+    }
+
+      const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
+        const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+         await updateUserRefreshToken(
+            client,
+            user.id,
+            refreshToken,
+            refreshTokenExpiresAt
+        );
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    res.status(200)
+    .cookie("AccessToken", accessToken, options)
+    .cookie("RefreshToken", refreshToken, options)
+    .json(
+        new ApiResponse(200, {
+            accessToken,
+            refreshToken,
+        }, "Tokens refreshed")
+    );
+});
+
+// GET    /api/v1/users/admin/users              → list all users (filterable by role)
+// GET    /api/v1/users/admin/users/:id          → get single user with full profile
+// PATCH  /api/v1/users/admin/users/:id/status   → activate or deactivate a user
+// DELETE /api/v1/users/admin/users/:id          → delete user
+// GET    /api/v1/users/admin/students           → list students with profile completion status
+
+// admin controllers to be implemnented below
+
+const listAllUsers = asyncHandler(async (req, res) => {
+    // Implementation for listing all users with optional role filter
+});
+
+const getUserById = asyncHandler(async (req, res) => {
+    // Implementation for getting a single user by ID with full profile
+});
+
+const updateUserStatus = asyncHandler(async (req, res) => {
+    // Implementation for activating or deactivating a user
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+    // Implementation for deleting a user
+});
+
+const listStudentsWithProfileStatus = asyncHandler(async (req, res) => {
+    // Implementation for listing students with their profile completion status
+});
+
+
+// GET  /api/v1/users/teacher/my-courses        → list courses assigned to this teacher
+// GET  /api/v1/users/teacher/my-courses/:id/students  → students enrolled in a specific course
+
+// GET  /api/v1/users/teacher/profile           → get teacher's own profile
+// PUT  /api/v1/users/teacher/profile           → update teacher's own profile
+
+const getTeacherProfile = asyncHandler(async (req, res) => {
+    // Implementation for getting teacher's own profile
+});
+
+const updateTeacherProfile = asyncHandler(async (req, res) => {
+    // Implementation for updating teacher's own profile
+});
+
+const listTeacherCourses = asyncHandler(async (req, res) => {
+    // Implementation for listing courses assigned to the teacher
+}   );
+
+const listCourseStudents = asyncHandler(async (req, res) => {
+    // Implementation for listing students enrolled in a specific course
+});
 
 export {
     registerUser,
     loginUser,
+    updateStudentProfileHandler,
+    getCurrentUser,
+    getProfileStatus,
+    logoutUser,
+    refreshTokenHandler,
+
+    //admin controllers
     createTeacher,
     createAdmin,
-    updateStudentProfileHandler,
+    listAllUsers,
+    getUserById,
+    updateUserStatus,
+    deleteUser,
+    listStudentsWithProfileStatus,
+
+    //teacher controllers
+    getTeacherProfile,
+    updateTeacherProfile,
+    listTeacherCourses,
+    listCourseStudents,
 }
