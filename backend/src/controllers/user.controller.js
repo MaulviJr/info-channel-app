@@ -7,13 +7,16 @@ import { ApiError } from "../utils/ApiError.js";
 import { pool } from "../db/pool.js";
 import { uploadImage } from "../utils/cloudinary.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/tokens.js";
+import { getProfileCompletion } from "../services/studentProfile.service.js";
 import {
     createStudentProfile,
     createUser,
     findOneStudentProfileByCnic,
     findOneStudentProfileByGrNumber,
+    findStudentProfileByUserId,
     findOneUserByEmail,
     findOneUserByEmailMinimal,
+    updateStudentProfile,
     updateUserRefreshToken,
 } from "../repositories/user.repository.js";
 
@@ -30,22 +33,54 @@ const registerSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     email: z.string().trim().email("Invalid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const adminCreateSchema = z.object({
+    name: z.string().trim().min(1, "Name is required"),
+    email: z.string().trim().email("Invalid email"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const studentProfileSchema = z.object({
     profilePictureUrl: z.preprocess(emptyToUndefined, z.string().url().optional()),
-    cellNumber: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
+    cellNumber: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "Cell number is required").max(20)
+    ),
     whatsappNumber: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
-    dateOfBirth: z.preprocess(emptyToUndefined, z.string().optional()),
-    education: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
-    cnic: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
+    dateOfBirth: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "Date of birth is required")
+    ),
+    education: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "Education is required").max(100)
+    ),
+    cnic: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "CNIC is required").max(20)
+    ),
     religion: z.preprocess(emptyToUndefined, z.string().max(50).optional()),
-    fatherName: z.preprocess(emptyToUndefined, z.string().max(255).optional()),
-    fatherCellNumber: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
+    fatherName: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "Father name is required").max(255)
+    ),
+    fatherCellNumber: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "Father cell number is required").max(20)
+    ),
     fatherWhatsappNumber: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
     fatherCnic: z.preprocess(emptyToUndefined, z.string().max(20).optional()),
     fatherOccupation: z.preprocess(emptyToUndefined, z.string().max(100).optional()),
-    address: z.preprocess(emptyToUndefined, z.string().optional()),
+    address: z.preprocess(
+        emptyToUndefined,
+        z.string().min(1, "Address is required")
+    ),
     leadSource: z.preprocess(
         emptyToUndefined,
-        z.enum(["Sign Board", "Social Media", "Friends", "Teacher", "Other"]).optional()
+        z.enum(["Sign Board", "Social Media", "Friends", "Teacher", "Other"], {
+            required_error: "Lead source is required",
+        })
     ),
 });
 
@@ -56,34 +91,17 @@ const generateGrNumber = () => {
 };
 
 
+
 const registerUser = asyncHandler(async (req, res) => {
     const parsed = registerSchema.safeParse(req.body);
     if (!parsed.success) {
         throw new ApiError(400, "Validation failed", parsed.error.issues);
     }
 
-    const {
-        name,
-        email,
-        password,
-        profilePictureUrl,
-        cellNumber,
-        whatsappNumber,
-        dateOfBirth,
-        education,
-        cnic,
-        religion,
-        fatherName,
-        fatherCellNumber,
-        fatherWhatsappNumber,
-        fatherCnic,
-        fatherOccupation,
-        address,
-        leadSource,
-    } = parsed.data;
+    const { name, email, password } = parsed.data;
 
     const role = "student";
-    let uploadedProfileUrl = profilePictureUrl;
+    let uploadedProfileUrl = null;
 
     if (req.file?.path) {
         const uploadResult = await uploadImage(req.file.path);
@@ -97,13 +115,6 @@ const registerUser = asyncHandler(async (req, res) => {
         const existingUser = await findOneUserByEmailMinimal(client, email);
         if (existingUser.rowCount > 0) {
             throw new ApiError(409, "Email already exists");
-        }
-
-        if (cnic) {
-            const existingCnic = await findOneStudentProfileByCnic(client, cnic);
-            if (existingCnic.rowCount > 0) {
-                throw new ApiError(409, "CNIC already exists");
-            }
         }
 
         let grNumber = null;
@@ -139,19 +150,19 @@ const registerUser = asyncHandler(async (req, res) => {
             client,
             user.id,
             uploadedProfileUrl || null,
-            cellNumber || null,
-            whatsappNumber || null,
-            dateOfBirth || null,
-            education || null,
-            cnic || null,
-            religion || null,
-            fatherName || null,
-            fatherCellNumber || null,
-            fatherWhatsappNumber || null,
-            fatherCnic || null,
-            fatherOccupation || null,
-            address || null,
-            leadSource || null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
             grNumber
         );
 
@@ -181,6 +192,171 @@ const registerUser = asyncHandler(async (req, res) => {
                     grNumber: profileInsert.rows[0].gr_number,
                 },
             })
+        );
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+});
+
+const createUserWithRole = async (req, res, role) => {
+    const parsed = adminCreateSchema.safeParse(req.body);
+    if (!parsed.success) {
+        throw new ApiError(400, "Validation failed", parsed.error.issues);
+    }
+
+    const { name, email, password } = parsed.data;
+
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        const existingUser = await findOneUserByEmailMinimal(client, email);
+        if (existingUser.rowCount > 0) {
+            throw new ApiError(409, "Email already exists");
+        }
+
+        const passwordHash = await bcrypt.hash(password, 10);
+        const userInsert = await createUser(
+            client,
+            name,
+            email,
+            passwordHash,
+            role
+        );
+
+        await client.query("COMMIT");
+
+        const user = userInsert.rows[0];
+        res.status(201).json(
+            new ApiResponse(
+                201,
+                {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
+                `User created with role ${role}`
+            )
+        );
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+const createTeacher = asyncHandler(async (req, res) => {
+    await createUserWithRole(req, res, "teacher");
+});
+
+const createAdmin = asyncHandler(async (req, res) => {
+    await createUserWithRole(req, res, "admin");
+});
+
+const updateStudentProfileHandler = asyncHandler(async (req, res) => {
+    const parsed = studentProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+        throw new ApiError(400, "Validation failed", parsed.error.issues);
+    }
+
+    const {
+        profilePictureUrl,
+        cellNumber,
+        whatsappNumber,
+        dateOfBirth,
+        education,
+        cnic,
+        religion,
+        fatherName,
+        fatherCellNumber,
+        fatherWhatsappNumber,
+        fatherCnic,
+        fatherOccupation,
+        address,
+        leadSource,
+    } = parsed.data;
+
+    let uploadedProfileUrl = profilePictureUrl || null;
+
+    if (req.file?.path) {
+        const uploadResult = await uploadImage(req.file.path);
+        uploadedProfileUrl = uploadResult?.secure_url || uploadedProfileUrl;
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        const profileResult = await findStudentProfileByUserId(
+            client,
+            req.user.id
+        );
+        if (profileResult.rowCount === 0) {
+            throw new ApiError(404, "Student profile not found");
+        }
+
+        const cnicResult = await findOneStudentProfileByCnic(client, cnic);
+        if (
+            cnicResult.rowCount > 0 &&
+            cnicResult.rows[0].user_id !== req.user.id
+        ) {
+            throw new ApiError(409, "CNIC already exists");
+        }
+
+        const updatedProfile = await updateStudentProfile(
+            client,
+            req.user.id,
+            uploadedProfileUrl,
+            cellNumber,
+            whatsappNumber || null,
+            dateOfBirth,
+            education,
+            cnic,
+            religion || null,
+            fatherName,
+            fatherCellNumber,
+            fatherWhatsappNumber || null,
+            fatherCnic || null,
+            fatherOccupation || null,
+            address,
+            leadSource
+        );
+
+        await client.query("COMMIT");
+
+        const profile = updatedProfile.rows[0];
+        const completion = getProfileCompletion(profile);
+
+        res.status(200).json(
+            new ApiResponse(
+                200,
+                {
+                    profile: {
+                        profilePictureUrl: profile.profile_picture_url,
+                        cellNumber: profile.cell_number,
+                        whatsappNumber: profile.whatsapp_number,
+                        dateOfBirth: profile.date_of_birth,
+                        education: profile.education,
+                        cnic: profile.cnic,
+                        religion: profile.religion,
+                        fatherName: profile.father_name,
+                        fatherCellNumber: profile.father_cell_number,
+                        fatherWhatsappNumber: profile.father_whatsapp_number,
+                        fatherCnic: profile.father_cnic,
+                        fatherOccupation: profile.father_occupation,
+                        address: profile.address,
+                        leadSource: profile.lead_source,
+                        grNumber: profile.gr_number,
+                    },
+                    completion,
+                },
+                "Profile updated"
+            )
         );
     } catch (error) {
         await client.query("ROLLBACK");
@@ -259,4 +435,7 @@ const loginUser = asyncHandler(async (req, res) => {
 export {
     registerUser,
     loginUser,
+    createTeacher,
+    createAdmin,
+    updateStudentProfileHandler,
 }

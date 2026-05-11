@@ -63,6 +63,51 @@ export const createStudentProfile = (
         ]
     );
 
+export const findStudentProfileByUserId = (client, userId) =>
+    client.query(
+        "SELECT user_id, profile_picture_url, cell_number, whatsapp_number, date_of_birth, education, cnic, religion, father_name, father_cell_number, father_whatsapp_number, father_cnic, father_occupation, address, lead_source, gr_number FROM student_profiles WHERE user_id = $1",
+        [userId]
+    );
+
+export const updateStudentProfile = (
+    client,
+    userId,
+    profilePictureUrl,
+    cellNumber,
+    whatsappNumber,
+    dateOfBirth,
+    education,
+    cnic,
+    religion,
+    fatherName,
+    fatherCellNumber,
+    fatherWhatsappNumber,
+    fatherCnic,
+    fatherOccupation,
+    address,
+    leadSource
+) =>
+    client.query(
+        "UPDATE student_profiles SET profile_picture_url = $1, cell_number = $2, whatsapp_number = $3, date_of_birth = $4, education = $5, cnic = $6, religion = $7, father_name = $8, father_cell_number = $9, father_whatsapp_number = $10, father_cnic = $11, father_occupation = $12, address = $13, lead_source = $14, updated_at = CURRENT_TIMESTAMP WHERE user_id = $15 RETURNING user_id, profile_picture_url, cell_number, whatsapp_number, date_of_birth, education, cnic, religion, father_name, father_cell_number, father_whatsapp_number, father_cnic, father_occupation, address, lead_source, gr_number",
+        [
+            profilePictureUrl,
+            cellNumber,
+            whatsappNumber,
+            dateOfBirth,
+            education,
+            cnic,
+            religion,
+            fatherName,
+            fatherCellNumber,
+            fatherWhatsappNumber,
+            fatherCnic,
+            fatherOccupation,
+            address,
+            leadSource,
+            userId,
+        ]
+    );
+
 export const updateUserRefreshToken = (
     client,
     userId,

@@ -17,9 +17,11 @@ app.use(cookieParser());
 app.use(express.static("public"));
 //imported routes
 import userRouter from './routes/user.routes.js';
+import enrollmentRouter from './routes/enrollment.routes.js';
 
 //routes.declaratoin
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/enrollments", enrollmentRouter);
 
 // app.get("/health", (req, res) => {
 // 	res.status(200).json({
