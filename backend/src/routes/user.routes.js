@@ -2,11 +2,22 @@ import { Router } from "express";
 import {
 	createAdmin,
 	createTeacher,
-	getCurrentUser,
+	deleteUser,
 	getProfileStatus,
+	getCurrentUser,
+	getTeacherProfile,
+	getUserById,
+	listAllUsers,
+	listCourseStudents,
+	listStudentsWithProfileStatus,
+	listTeacherCourses,
 	loginUser,
+	logoutUser,
+	refreshTokenHandler,
 	registerUser,
+	updateTeacherProfile,
 	updateStudentProfileHandler,
+	updateUserStatus,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
@@ -34,5 +45,33 @@ router
 router
 	.route("/admin/create-admin")
 	.post(verifyJWT, requireRole("admin"), createAdmin);
+
+router.route("/logout").post(verifyJWT, logoutUser);
+router.route("/refresh-token").post(refreshTokenHandler);
+
+router
+	.route("/admin/users")
+	.get(verifyJWT, requireRole("admin"), listAllUsers);
+router
+	.route("/admin/users/:id")
+	.get(verifyJWT, requireRole("admin"), getUserById)
+	.delete(verifyJWT, requireRole("admin"), deleteUser);
+router
+	.route("/admin/users/:id/status")
+	.patch(verifyJWT, requireRole("admin"), updateUserStatus);
+router
+	.route("/admin/students")
+	.get(verifyJWT, requireRole("admin"), listStudentsWithProfileStatus);
+
+router
+	.route("/teacher/profile")
+	.get(verifyJWT, requireRole("teacher"), getTeacherProfile)
+	.put(verifyJWT, requireRole("teacher"), updateTeacherProfile);
+router
+	.route("/teacher/my-courses")
+	.get(verifyJWT, requireRole("teacher"), listTeacherCourses);
+router
+	.route("/teacher/my-courses/:id/students")
+	.get(verifyJWT, requireRole("teacher"), listCourseStudents);
 
 export default router;

@@ -1,0 +1,131 @@
+@baseUrl = http://localhost:5000/api/v1
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NTYxNjc1LCJleHAiOjE3Nzg1NjI1NzV9.85b8O8-mInrODdLKIrXnN464XrV92g-EUA0ogPuJWEA
+@USER_ID = 36c22a6e-99f7-4ae5-92c0-67c2c0bb6646
+### Register (student)
+POST {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+  "name": "Student One",
+  "email": "student1@example.com",
+  "password": "password123"
+}
+
+### Login
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "admin@infochannel.com",
+  "password": "admin123"
+}
+
+### Refresh tokens
+POST {{baseUrl}}/users/refresh-token
+
+### Logout
+POST {{baseUrl}}/users/logout
+Authorization: Bearer {{accessToken}}
+
+### Get current user
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{accessToken}}
+
+### Get student profile status (student role)
+GET {{baseUrl}}/users/profile/status
+Authorization: Bearer {{accessToken}}
+
+### Update student profile (student role)
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "profilePictureUrl": "https://example.com/image.png",
+  "cellNumber": "03001234567",
+  "whatsappNumber": "03001234567",
+  "dateOfBirth": "2004-05-01",
+  "education": "Intermediate",
+  "cnic": "12345-1234567-1",
+  "religion": "Islam",
+  "fatherName": "Father Name",
+  "fatherCellNumber": "03007654321",
+  "fatherWhatsappNumber": "03007654321",
+  "fatherCnic": "12345-7654321-1",
+  "fatherOccupation": "Engineer",
+  "address": "Some Address",
+  "leadSource": "Social Media"
+}
+
+### Create teacher (admin role)
+POST {{baseUrl}}/users/admin/create-teacher
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Teacher One",
+  "email": "teacher1@example.com",
+  "password": "password123"
+}
+
+### Create admin (admin role)
+POST {{baseUrl}}/users/admin/create-admin
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Admin Two",
+  "email": "admin2@example.com",
+  "password": "password123"
+}
+
+### List users (admin role)
+GET {{baseUrl}}/users/admin/users
+Authorization: Bearer {{accessToken}}
+
+### List users by role (admin role)
+GET {{baseUrl}}/users/admin/users?role=student
+Authorization: Bearer {{accessToken}}
+
+### Get user by id (admin role)
+GET {{baseUrl}}/users/admin/users/{{USER_ID}}
+Authorization: Bearer {{accessToken}}
+
+### Update user status (admin role)
+PATCH {{baseUrl}}/users/admin/users/{{USER_ID}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+### Delete user (admin role)
+DELETE {{baseUrl}}/users/admin/users/{{USER_ID}}
+Authorization: Bearer {{accessToken}}
+
+### List students with profile status (admin role)
+GET {{baseUrl}}/users/admin/students
+Authorization: Bearer {{accessToken}}
+
+### Get teacher profile (teacher role)
+GET {{baseUrl}}/users/teacher/profile
+Authorization: Bearer {{accessToken}}
+
+### Update teacher profile (teacher role)
+PUT {{baseUrl}}/users/teacher/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Teacher Updated",
+  "email": "teacher1@example.com"
+}
+
+### List teacher courses (teacher role)
+GET {{baseUrl}}/users/teacher/my-courses
+Authorization: Bearer {{accessToken}}
+
+### List course students (teacher role)
+GET {{baseUrl}}/users/teacher/my-courses/{{COURSE_ID}}/students
+Authorization: Bearer {{accessToken}}

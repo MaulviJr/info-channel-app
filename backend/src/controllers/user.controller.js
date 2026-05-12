@@ -15,10 +15,17 @@ import {
     findOneStudentProfileByGrNumber,
     findStudentProfileByUserId,
     findOneUserByEmail,
+    findOneUserById,
     findOneUserByEmailMinimal,
     updateStudentProfile,
     updateUserRefreshToken,
+    listUsers,
+    listStudentsWithProfiles,
+    deleteUserById
 } from "../repositories/user.repository.js";
+import {
+    findCoursesByInstructorId
+} from "../repositories/course.repository.js";
 
 const emptyToUndefined = (value) => {
     if (typeof value !== "string") {
@@ -33,6 +40,12 @@ const registerSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     email: z.string().trim().email("Invalid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const updateTeacherProfileSchema = z.object({
+    name: z.string().trim().min(1, "Name is required").optional(),
+    email: z.string().trim().email("Invalid email").optional(),
+    // password: z.string().min(8, "Password must be at least 8 characters").optional(),
 });
 
 const adminCreateSchema = z.object({
@@ -505,7 +518,10 @@ const logoutUser = asyncHandler(async (req, res) => {
     }     finally {
         client.release();
     }
-
+    res.status(200)
+    .clearCookie("AccessToken")
+    .clearCookie("RefreshToken")
+    .json(new ApiResponse(200, null, "Logged out successfully"));
 
 });
 
@@ -569,24 +585,108 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
 
 const listAllUsers = asyncHandler(async (req, res) => {
     // Implementation for listing all users with optional role filter
+    const client = await pool.connect();
+    try {
+        const roleFilter = req.query.role;
+        let usersResult;
+        if (roleFilter) {
+            usersResult = await listUsersByRole(client, roleFilter);
+        } else {
+            usersResult = await listUsers(client, 100, 0); // default limit and offset
+        }
+        res.status(200).json(new ApiResponse(200, usersResult.rows, "Users listed successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 const getUserById = asyncHandler(async (req, res) => {
     // Implementation for getting a single user by ID with full profile
+    const client = await pool.connect();
+    try {
+        const user = await findOneUserById(client, req.params.id);
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+        res.status(200).json(new ApiResponse(200, user.rows[0], "User retrieved successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 const updateUserStatus = asyncHandler(async (req, res) => {
-    // Implementation for activating or deactivating a user
+    // how will i imnplement it since i don't have any columns of active in db ? 
+
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
     // Implementation for deleting a user
+
+    const userId = req.params.id;
+    const client = await pool.connect();
+
+    try {
+        await deleteUserById(client, userId);
+        res.status(200).json(new ApiResponse(200, null, "User deleted successfully"));
+    } finally {
+        client.release();
+    }
+
 });
 
 const listStudentsWithProfileStatus = asyncHandler(async (req, res) => {
-    // Implementation for listing students with their profile completion status
+
+    const client = await pool.connect();
+
+    try {
+
+        const usersResult =
+            await listStudentsWithProfiles(client, 10, 0);
+
+        const students = usersResult.rows.map(user => {
+
+            const profileStatus = getProfileCompletion(user);
+
+            return {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+
+                profileStatus
+            };
+        });
+
+        res.status(200).json(
+            new ApiResponse(
+                200,
+                students,
+                "Students fetched successfully"
+            )
+        );
+
+    } catch (error) {
+
+        console.error(error);
+
+        throw new ApiError(
+            500,
+            "Failed to list students with profile status"
+        );
+
+    } finally {
+
+        client.release();
+
+    }
 });
 
+const changeUserRole = asyncHandler(async (req, res) => {
+    // Implementation for changing a user's role (admin only)
+    // Validate new role, update in DB, return updated user info
+
+    
+
+});
 
 // GET  /api/v1/users/teacher/my-courses        → list courses assigned to this teacher
 // GET  /api/v1/users/teacher/my-courses/:id/students  → students enrolled in a specific course
@@ -596,18 +696,76 @@ const listStudentsWithProfileStatus = asyncHandler(async (req, res) => {
 
 const getTeacherProfile = asyncHandler(async (req, res) => {
     // Implementation for getting teacher's own profile
+    const client = await pool.connect();
+    try {
+        const user = await findOneUserById(client, req.user.id);
+        if (!user) {
+            throw new ApiError(404, "Teacher not found");
+        }
+        res.status(200).json(new ApiResponse(200, {
+            id: user.rows[0].id,
+            name: user.rows[0].name,
+            email: user.rows[0].email,
+            role: user.rows[0].role,
+            created_at: user.rows[0].created_at
+        }, "Teacher profile retrieved successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 const updateTeacherProfile = asyncHandler(async (req, res) => {
     // Implementation for updating teacher's own profile
+    const client = await pool.connect();
+    try {
+        const parsed = updateTeacherProfileSchema.safeParse(req.body);
+        if (!parsed.success) {
+            throw new ApiError(400, "Validation failed", parsed.error.issues);
+        }
+        const { name, email } = parsed.data;
+
+        const existingUser = await findOneUserByEmailMinimal(client, email);
+        if (existingUser.rowCount > 0 && existingUser.rows[0].id !== req.user.id) {
+            throw new ApiError(409, "Email already exists");
+        }
+        const updatedUser = await updateUserProfile(client, req.user.id, name, email);
+
+        res.status(200).json(new ApiResponse(200, {
+            id: updatedUser.rows[0].id,
+            name: updatedUser.rows[0].name,
+            email: updatedUser.rows[0].email,
+            role: updatedUser.rows[0].role,
+            created_at: updatedUser.rows[0].created_at
+        }, "Teacher profile updated successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 const listTeacherCourses = asyncHandler(async (req, res) => {
     // Implementation for listing courses assigned to the teacher
+    //take teacher id from req.user.id and then find courses from course repository where instructor_id = teacher id
+
+    const cient = await pool.connect();
+    try {
+        const coursesResult = await findCoursesByInstructorId(cient, req.user.id, 10, 0);
+        res.status(200).json(new ApiResponse(200, coursesResult.rows, "Courses fetched successfully"));
+    } finally {
+        cient.release();
+    }
 }   );
 
 const listCourseStudents = asyncHandler(async (req, res) => {
     // Implementation for listing students enrolled in a specific course
+    const client = await pool.connect();
+    try {
+        const studentsResult = await getCourseStudents(client, req.params.id, 10, 0);
+        res.status(200).json(new ApiResponse(200,
+             studentsResult.rows, 
+             "Students fetched successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 export {

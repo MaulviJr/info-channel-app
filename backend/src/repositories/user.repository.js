@@ -118,3 +118,52 @@ export const updateUserRefreshToken = (
         "UPDATE users SET refresh_token = $1, refresh_token_expires_at = $2 WHERE id = $3",
         [refreshToken, refreshTokenExpiresAt, userId]
     );
+
+
+export const listUsers = (client, limit, offset) =>
+    client.query(
+        "SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        [limit, offset]
+    );
+
+export const findOneUserById = (client, userId) =>
+    client.query(
+        "SELECT id, name, email, role, created_at FROM users WHERE id = $1",
+        [userId]
+    );
+
+export const deleteUserById = (client, userId) =>
+    client.query("DELETE FROM users WHERE id = $1", [userId]);
+
+export const listStudentsWithProfiles = (client, limit, offset) =>
+    client.query(
+        `
+        SELECT
+            u.id,
+            u.name,
+            u.email,
+            u.role,
+            u.created_at,
+
+            sp.cell_number,
+            sp.date_of_birth,
+            sp.cnic,
+            sp.father_name,
+            sp.father_cell_number,
+            sp.address,
+            sp.education,
+            sp.lead_source
+
+        FROM users u
+
+        LEFT JOIN student_profiles sp
+        ON u.id = sp.user_id
+
+        WHERE u.role = 'student'
+
+        ORDER BY u.created_at DESC
+
+        LIMIT $1 OFFSET $2
+        `,
+        [limit, offset]
+    );
