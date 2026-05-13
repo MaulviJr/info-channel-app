@@ -26,7 +26,7 @@ import {
 import {
     findCoursesByInstructorId
 } from "../repositories/course.repository.js";
-
+import jwt from "jsonwebtoken";
 const emptyToUndefined = (value) => {
     if (typeof value !== "string") {
         return value;
@@ -529,6 +529,7 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
     const token =
         req.cookies?.RefreshToken ||
         req.header("Authorization")?.replace("Bearer ", "");
+    console.log("Refresh token received:", token);
 
     // Validate token
     // If valid, generate new access token and refresh token, update in DB, and return new tokens
@@ -538,26 +539,28 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
     }
 
     const decodedtoken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
-
-    const userEmail = decodedtoken?.email;
+    console.log("Decoded refresh token:", decodedtoken);
+    const userId = decodedtoken?.id;
+    console.log("Decoded refresh token for user ID:", userId);
     const client = await pool.connect();
-    const user = await findOneUserByEmailMinimal(client, userEmail);
+    const user = await findOneUserById(client, userId);
 
     if (user.rowCount === 0) {
         client.release();
-        throw new ApiError(401, "Invalid refresh token");
+        throw new ApiError(401, "Invalid refresh token, so can't find user");
     }
 
-      const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
-        const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const userRow = user.rows[0];
+    const accessToken = generateAccessToken(userRow);
+    const refreshToken = generateRefreshToken(userRow);
+    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-         await updateUserRefreshToken(
-            client,
-            user.id,
-            refreshToken,
-            refreshTokenExpiresAt
-        );
+    await updateUserRefreshToken(
+        client,
+        userRow.id,
+        refreshToken,
+        refreshTokenExpiresAt
+    );
 
     const options = {
         httpOnly: true,

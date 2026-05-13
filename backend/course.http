@@ -1,0 +1,41 @@
+@baseUrl = http://localhost:5000/api/v1
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NjUwODYwLCJleHAiOjE3Nzg2NTE3NjB9.uiRbs78R0cJzaWvg_wkJtfUpoAXBdhsRjgsI4g2FH1g
+@COURSE_ID = 97196bc7-6217-45f6-ab17-e4ec6b6c0886
+### List published courses (public)
+GET {{baseUrl}}/courses
+
+### List published courses (public) with pagination
+GET {{baseUrl}}/courses?page=1&limit=10
+
+### Get course by id (public)
+GET {{baseUrl}}/courses/{{COURSE_ID}}
+
+### Create course (teacher role)
+POST {{baseUrl}}/courses/create-course
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "title": "Frontend Foundations",
+  "description": "Learn HTML, CSS, and modern UI practices",
+  "admission_fee": 1000,
+  "monthly_fee": 2500,
+  "thumbnail_url": "https://example.com/course.png"
+}
+
+### Update course (teacher role)
+PUT {{baseUrl}}/courses/{{COURSE_ID}}
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+ "description": "learn Node, express and postgresql"
+}
+
+### Delete course (admin role)
+DELETE {{baseUrl}}/courses/{{COURSE_ID}}
+Authorization: Bearer {{accessToken}}
+
+### Toggle publish (admin role)
+PATCH {{baseUrl}}/courses/{{COURSE_ID}}/publish
+Authorization: Bearer {{accessToken}}

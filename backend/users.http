@@ -1,5 +1,7 @@
 @baseUrl = http://localhost:5000/api/v1
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NTYxNjc1LCJleHAiOjE3Nzg1NjI1NzV9.85b8O8-mInrODdLKIrXnN464XrV92g-EUA0ogPuJWEA
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NjUwODYwLCJleHAiOjE3Nzg2NTE3NjB9.uiRbs78R0cJzaWvg_wkJtfUpoAXBdhsRjgsI4g2FH1g
+@refreshToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImlhdCI6MTc3ODY1MDg2MCwiZXhwIjoxNzc5MjU1NjYwfQ.WO9D6xqZB75jmMkYtjMTWAq7Xn6-ag4z5DqXRVyMwWE
+
 @USER_ID = 36c22a6e-99f7-4ae5-92c0-67c2c0bb6646
 ### Register (student)
 POST {{baseUrl}}/users/register
@@ -22,7 +24,7 @@ Content-Type: application/json
 
 ### Refresh tokens
 POST {{baseUrl}}/users/refresh-token
-
+Authorization: Bearer {{refreshToken}}
 ### Logout
 POST {{baseUrl}}/users/logout
 Authorization: Bearer {{accessToken}}
