@@ -31,6 +31,10 @@ const courseSchema = z.object({
             .max(1000, "Description must be less than 1000 characters")
             .optional()
     ),
+    board_registration: z.preprocess(
+        nullToUndefined,
+        z.enum(["SDC", "SBTE", "None"]).optional()
+    ),
     admission_fee: z.preprocess(nullToUndefined, z.number().min(0)),
     monthly_fee: z.preprocess(nullToUndefined, z.number().min(0)),
     thumbnail_url: z.preprocess(nullToUndefined, z.string().url().optional())
@@ -79,14 +83,18 @@ if (!parsed.success) {
     throw new ApiError(400, "Validation failed", parsed.error.issues);
 }
 console.log("Creating course with data:", parsed.data, "by user:", req.user);
-    const { title, description, admission_fee, monthly_fee, thumbnail_url } = parsed.data;
+    const { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url } = parsed.data;
 
     const client = await pool.connect();
     const instructorId = req.user?.id; // assuming req.user is populated by auth middleware
     if(!instructorId) {
         throw new ApiError(401, "Unable to identify instructor");
     }
-    const { rows } = await createCourse(client, { title, description, admission_fee, monthly_fee, thumbnail_url }, instructorId);
+    const { rows } = await createCourse(
+        client,
+        { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url },
+        instructorId
+    );
     const course = rows[0];
 
     return res.status(201).json(new ApiResponse(201,
@@ -107,7 +115,7 @@ const updateCourse = asyncHandler(async (req, res) => {
     if (!parsed.success) {
         throw new ApiError(400, "Validation failed", parsed.error.issues);
     }
-    const { title, description, admission_fee, monthly_fee, thumbnail_url } = parsed.data;
+    const { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url } = parsed.data;
 
     const client = await pool.connect();
 
@@ -125,6 +133,7 @@ const updateCourse = asyncHandler(async (req, res) => {
     const updatePayload = {
         title: title ?? course.title,
         description: description ?? course.description,
+        board_registration: board_registration ?? course.board_registration,
         admission_fee: admission_fee ?? course.admission_fee,
         monthly_fee: monthly_fee ?? course.monthly_fee,
         thumbnail_url: thumbnail_url ?? course.thumbnail_url,

@@ -38,21 +38,29 @@ export const getCourseStudents = (client, courseId, limit, offset) =>
         [courseId, limit, offset]
     );
 
-    export const createCourse = (client, { title, description, admission_fee, monthly_fee, thumbnail_url }, instructorId) =>
+    export const createCourse = (
+        client,
+        { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url },
+        instructorId
+    ) =>
     client.query(
-        `INSERT INTO courses (title, description, admission_fee, monthly_fee, thumbnail_url, instructor_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
+            `INSERT INTO courses (title, description, board_registration, admission_fee, monthly_fee, thumbnail_url, instructor_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
-        [title, description, admission_fee, monthly_fee, thumbnail_url, instructorId]
+            [title, description, board_registration, admission_fee, monthly_fee, thumbnail_url, instructorId]
     );
 
-export const updateCourse = (client, courseId, { title, description, admission_fee, monthly_fee, thumbnail_url }) =>
+    export const updateCourse = (
+        client,
+        courseId,
+        { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url }
+    ) =>
     client.query(
         `UPDATE courses
-         SET title = $1, description = $2, admission_fee = $3, monthly_fee = $4, thumbnail_url = $5
-         WHERE id = $6
+             SET title = $1, description = $2, board_registration = $3, admission_fee = $4, monthly_fee = $5, thumbnail_url = $6
+             WHERE id = $7
          RETURNING *`,
-        [title, description, admission_fee, monthly_fee, thumbnail_url, courseId]
+            [title, description, board_registration, admission_fee, monthly_fee, thumbnail_url, courseId]
     );
 
 export const deleteCourse = (client, courseId) =>

@@ -19,3 +19,12 @@ export const countActiveEnrollmentsByStudent = async (client, studentId) => {
     return parseInt(result.rows[0].count, 10);
 };
 
+export const updateEnrollmentStatus = (client, enrollmentId, status) =>
+    client.query(
+        `UPDATE enrollments
+         SET status = $1
+         WHERE id = $2
+         RETURNING id, student_id, course_id, status, enrolled_at`,
+        [status, enrollmentId]
+    );
+
