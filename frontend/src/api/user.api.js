@@ -25,6 +25,11 @@ const getProfileStatusAPI = async () => {
     return response;
 };
 
+const getProfileStatus = async () => {
+    const response = await getProfileStatusAPI();
+    return response.data;
+};
+
 /**
  * ==========================================
  * STUDENT ENDPOINTS
@@ -116,6 +121,7 @@ export {
     // Current User
 
     getProfileStatusAPI,
+    getProfileStatus,
 
     // Student
     updateStudentProfileAPI,

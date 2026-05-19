@@ -1,30 +1,130 @@
-import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { BookOpen, CheckCircle, RefreshCw, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getProfileStatus } from '../../api/user.api';
+import { getMyEnrollments } from '../../api/enrollment.api';
+import CourseProgressCard from '../../components/dashboard/CourseProgressCard';
+import RecentActivity from '../../components/dashboard/RecentActivity';
+import StatCard from '../../components/dashboard/StatCard';
+import ProfileCompletionBanner from '../../components/profile/ProfileCompletionBanner';
+import Button from '../../components/common/Button';
 
 function StudentDashboard() {
+  const navigate = useNavigate();
+  const profileQuery = useQuery({
+    queryKey: ['profileStatus'],
+    queryFn: getProfileStatus,
+  });
+
+  const enrollmentsQuery = useQuery({
+    queryKey: ['myEnrollments'],
+    queryFn: getMyEnrollments,
+  });
+
+  const profilePayload = profileQuery.data?.data || profileQuery.data || {};
+  const isComplete = profilePayload.isComplete ?? true;
+  const missingFields = profilePayload.missingFields || [];
+  const enrollmentsPayload = enrollmentsQuery.data?.data || enrollmentsQuery.data || [];
+  const enrollments = Array.isArray(enrollmentsPayload) ? enrollmentsPayload : [];
+
+  const enrolledCount = enrollments.filter(
+    (enrollment) => enrollment.status === 'active' || enrollment.status === 'pending_details'
+  ).length;
+
+  const completedCount = enrollments.filter(
+    (enrollment) => enrollment.status === 'completed'
+  ).length;
+
+  const activeEnrollments = enrollments.filter((enrollment) => enrollment.status === 'active');
+  const avgProgress = activeEnrollments.length
+    ? Math.round(
+        activeEnrollments.reduce(
+          (sum, enrollment) => sum + (enrollment.progress?.percent || 0),
+          0
+        ) / activeEnrollments.length
+      )
+    : 0;
+
+  if (profileQuery.isLoading || enrollmentsQuery.isLoading) {
+    return (
+      <div>
+        <div className="grid grid-cols-3 gap-4">
+          {[0, 1, 2].map((item) => (
+            <div
+              key={item}
+              className="bg-muted rounded-xl border border-border h-24 animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          {[0, 1].map((item) => (
+            <div key={item} className="bg-muted rounded-xl h-64 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (profileQuery.isError || enrollmentsQuery.isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <RefreshCw className="w-8 h-8 text-muted-foreground/60" />
+        <div className="text-sm text-muted-foreground">
+          Something went wrong. Please refresh the page.
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-5xl mx-auto px-6 py-16">
-        <div className="rounded-3xl border border-border bg-card p-8 shadow-lg">
-          <p className="text-sm uppercase tracking-[0.25em] text-muted-foreground">Student</p>
-          <h1 className="mt-4 text-3xl md:text-4xl font-semibold">Dashboard</h1>
-          <p className="mt-3 text-base text-muted-foreground">
-            This is your starter dashboard. Course progress, enrollments, and profile widgets will
-            appear here next.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center rounded-lg border border-border px-4 py-2 text-sm font-medium"
-            >
-              Back to home
-            </Link>
-            <Link
-              to="/login"
-              className="inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground px-4 py-2 text-sm font-medium"
-            >
-              Switch account
-            </Link>
-          </div>
+    <div className="flex flex-col gap-6">
+      <ProfileCompletionBanner isComplete={isComplete} missingFields={missingFields} />
+      <div className="grid grid-cols-3 gap-4">
+        <StatCard
+          icon={BookOpen}
+          label="Enrolled courses"
+          value={enrolledCount}
+          accentBg="bg-primary/15"
+          accentText="text-primary"
+        />
+        <StatCard
+          icon={TrendingUp}
+          label="Overall progress"
+          value={`${avgProgress}%`}
+          accentBg="bg-accent/20"
+          accentText="text-accent-foreground"
+        />
+        <StatCard
+          icon={CheckCircle}
+          label="Completed"
+          value={completedCount}
+          accentBg="bg-secondary/70"
+          accentText="text-secondary-foreground"
+        />
+      </div>
+      <div className="grid grid-cols-3 gap-6">
+        <div className="col-span-2">
+          <div className="text-base font-medium text-foreground mb-3">My Courses</div>
+          {enrollments.length ? (
+            <div className="grid grid-cols-2 gap-4">
+              {enrollments.map((enrollment) => (
+                <CourseProgressCard key={enrollment.id} enrollment={enrollment} />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border p-12 flex flex-col items-center justify-center text-center">
+              <BookOpen className="w-10 h-10 text-muted-foreground/60 mb-3" />
+              <div className="text-sm text-muted-foreground mb-4">
+                You are not enrolled in any courses yet.
+              </div>
+              <Button size="lg" onClick={() => navigate('/student/courses')}>
+                Browse Courses
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="col-span-1">
+          <RecentActivity />
         </div>
       </div>
     </div>
