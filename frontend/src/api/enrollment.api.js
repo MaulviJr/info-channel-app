@@ -1,77 +1,66 @@
-const mockEnrollments = [
-	{
-		id: '3dce1b8f-8c17-4a4b-9b2c-111111111111',
-		course_id: 'f5e36d5f-1c56-4e7d-9c25-aaaaaaaaaaaa',
-		status: 'active',
-		enrolled_at: '2026-05-10T10:00:00Z',
-		course: {
-			title: 'Frontend Foundations',
-			description: 'Learn the basics of modern frontend development.',
-			thumbnail_url: null,
-			instructor: { name: 'Ayesha Khan' },
-		},
-		progress: {
-			completedLectures: 8,
-			totalLectures: 20,
-			percent: 40,
-		},
-	},
-	{
-		id: '7c6b47e0-9b8a-4f28-9c3a-222222222222',
-		course_id: 'cdbf0a2c-8869-4a2c-9f98-bbbbbbbbbbbb',
-		status: 'pending_details',
-		enrolled_at: '2026-05-12T09:30:00Z',
-		course: {
-			title: 'Data Literacy Essentials',
-			description: 'Core data skills for modern students.',
-			thumbnail_url: null,
-			instructor: { name: 'Imran Ali' },
-		},
-		progress: {
-			completedLectures: 0,
-			totalLectures: 16,
-			percent: 0,
-		},
-	},
-	{
-		id: 'a3d5f2c1-0c8d-4b6e-93a8-333333333333',
-		course_id: '9c8f2e5b-5b61-4c13-98c7-cccccccccccc',
-		status: 'completed',
-		enrolled_at: '2026-04-02T14:20:00Z',
-		course: {
-			title: 'Communication Skills for Tech',
-			description: 'Build clarity and confidence in your communication.',
-			thumbnail_url: null,
-			instructor: { name: 'Sara Noor' },
-		},
-		progress: {
-			completedLectures: 12,
-			totalLectures: 12,
-			percent: 100,
-		},
-	},
-];
-// {
-//   "statusCode": 200,
-//   "data": {
-//     "enrollment": {
-//       "id": "e2b754e2-5993-4237-bd6b-02e4fcd41712",
-//       "student_id": "d2140332-1cd6-4fb6-98e0-08802e7aad88",
-//       "course_id": "97196bc7-6217-45f6-ab17-e4ec6b6c0886",
-//       "status": "active",
-//       "enrolled_at": "2026-05-19T05:38:21.929Z"
-//     }
-//   },
-//   "message": "Enrollment retrieved",
-//   "success": true
-// }
-const getMyEnrollments = async () => {
-	// TODO: Replace mock data once GET /api/v1/enrollments/my is available.
-	return mockEnrollments;
+import api from './axios';
 
-	// Example:
-	// const response = await axiosInstance.get('/enrollments/my');
-	// return response.data;
+/**
+ * Create an enrollment for the current student.
+ * @param {Object} payload
+ */
+const createEnrollmentAPI = async (payload) => {
+	const response = await api.post('/enrollments', payload);
+	return response;
 };
 
-export { getMyEnrollments };
+/**
+ * Update the enrollment status (admin only).
+ * @param {string} enrollmentId
+ * @param {Object} payload
+ */
+const updateEnrollmentStatusAPI = async (enrollmentId, payload) => {
+	const response = await api.patch(`/enrollments/${enrollmentId}/status`, payload);
+	return response;
+};
+
+/**
+ * Update the payment status (admin only).
+//  * @param {string} enrollmentId
+//  * @param {Object} payload
+//  */
+// const updateEnrollmentPaymentStatusAPI = async (enrollmentId, payload) => {
+// 	const response = await api.patch(`/enrollments/${enrollmentId}/payment-status`, payload);
+// 	return response;
+// };
+
+/**
+ * Get a single enrollment by id.
+ * @param {string} enrollmentId
+ */
+const getEnrollmentByIdAPI = async () => {
+	console.log('Fetching enrollment details for ID:',);
+	const response = await api.get(`/enrollments/`);
+	console.log('Enrollment details:', response);
+	return response;
+};
+
+const getMyEnrollmentsAPI = async () => {
+	console.log('Fetching my enrollments');
+	const response = await api.get('/enrollments/my');
+	console.log('My enrollments:', response.data.data);
+	return response;
+};
+
+/**
+ * Delete an enrollment by id (admin only).
+ * @param {string} enrollmentId
+ */
+const deleteEnrollmentAPI = async (enrollmentId) => {
+	const response = await api.delete(`/enrollments/${enrollmentId}`);
+	return response;
+};
+
+export {
+	createEnrollmentAPI,
+	updateEnrollmentStatusAPI,
+	// updateEnrollmentPaymentStatusAPI,
+	getEnrollmentByIdAPI,
+	deleteEnrollmentAPI,
+	getMyEnrollmentsAPI
+};

@@ -92,42 +92,42 @@ const changeEnrollmentStatusHandler = asyncHandler(async (req, res) => {
     }
 });
 
-const changePaymentStatusHandler = asyncHandler(async (req, res) => {
-    const paramsParsed = enrollmentIdSchema.safeParse(req.params);
-    if (!paramsParsed.success) {
-        throw new ApiError(400, "Validation failed", paramsParsed.error.issues);
-    }
+// const changePaymentStatusHandler = asyncHandler(async (req, res) => {
+//     const paramsParsed = enrollmentIdSchema.safeParse(req.params);
+//     if (!paramsParsed.success) {
+//         throw new ApiError(400, "Validation failed", paramsParsed.error.issues);
+//     }
 
-    const bodyParsed = paymentStatusSchema.safeParse(req.body);
-    if (!bodyParsed.success) {
-        throw new ApiError(400, "Validation failed", bodyParsed.error.issues);
-    }
+//     const bodyParsed = paymentStatusSchema.safeParse(req.body);
+//     if (!bodyParsed.success) {
+//         throw new ApiError(400, "Validation failed", bodyParsed.error.issues);
+//     }
 
-    const { id } = paramsParsed.data;
-    const { status } = bodyParsed.data;
+//     const { id } = paramsParsed.data;
+//     const { status } = bodyParsed.data;
 
-    const client = await pool.connect();
-    try {
-        const enrollment = await updateEnrollmentStatus(client, id, status);
+//     const client = await pool.connect();
+//     try {
+//         const enrollment = await updateEnrollmentStatus(client, id, status);
 
-        return res.status(200).json(
-            new ApiResponse(
-                200,
-                { enrollment },
-                "Payment status updated"
-            )
-        );
-    } finally {
-        client.release();
-    }
-});
+//         return res.status(200).json(
+//             new ApiResponse(
+//                 200,
+//                 { enrollment },
+//                 "Payment status updated"
+//             )
+//         );
+//     } finally {
+//         client.release();
+//     }
+// });
 
 const getEnrollmentHandler = asyncHandler(async (req, res) => {
+    console.log("I am here in getEnrollmentHandler for user:", req.user);
     const paramsParsed = enrollmentIdSchema.safeParse(req.params);
     if (!paramsParsed.success) {
         throw new ApiError(400, "Validation failed", paramsParsed.error.issues);
     }
-
     const { id } = paramsParsed.data;
 
     // Use json_build_object to create the nested JSON structure directly in SQL
@@ -178,6 +178,45 @@ const getEnrollmentHandler = asyncHandler(async (req, res) => {
     );
 });
 
+const getMyEnrollmentsHandler = asyncHandler(async (req, res) => {
+    console.log("I am here in getMyEnrollmentsHandler for user:", req.user);
+    const query = `
+        SELECT 
+            e.id,
+            e.course_id,
+            e.status,
+            e.enrolled_at,
+            json_build_object(
+                'title', c.title,
+                'description', c.description,
+                'thumbnail_url', c.thumbnail_url,
+                'admission_fee', c.admission_fee,
+                'monthly_fee', c.monthly_fee,
+                'instructor', json_build_object('name', u.name)
+            ) AS course,
+            json_build_object(
+                'completedLectures', 0,
+                'totalLectures', 0,
+                'percent', 0
+            ) AS progress
+        FROM enrollments e
+        JOIN courses c ON e.course_id = c.id
+        JOIN users u ON c.instructor_id = u.id
+        WHERE e.student_id = $1
+        ORDER BY e.enrolled_at DESC
+    `;
+
+    const result = await pool.query(query, [req.user.id]);
+    console.log("Enrollments fetched for user:", req.user.id, "Enrollments:", result.rows);
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            { enrollments: result.rows },
+            "Enrollments retrieved successfully"
+        )
+    );
+});
+
 const deleteEnrollmentHandler = asyncHandler(async (req, res) => {
     const paramsParsed = enrollmentIdSchema.safeParse(req.params);
     if (!paramsParsed.success) {
@@ -206,7 +245,8 @@ const deleteEnrollmentHandler = asyncHandler(async (req, res) => {
 export {
     createEnrollmentHandler,
     changeEnrollmentStatusHandler,
-    changePaymentStatusHandler,
+    // changePaymentStatusHandler,
     deleteEnrollmentHandler,
     getEnrollmentHandler,
+    getMyEnrollmentsHandler
 };

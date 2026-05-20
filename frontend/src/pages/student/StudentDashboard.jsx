@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, CheckCircle, RefreshCw, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getProfileStatus } from '../../api/user.api';
-import { getMyEnrollments } from '../../api/enrollment.api';
+import { getProfileStatus } from '../../api/user.api.js';
+import { getMyEnrollmentsAPI } from '../../api/enrollment.api.js'; // Updated import
 import CourseProgressCard from '../../components/dashboard/CourseProgressCard';
 import RecentActivity from '../../components/dashboard/RecentActivity';
 import StatCard from '../../components/dashboard/StatCard';
@@ -11,6 +11,7 @@ import Button from '../../components/common/Button';
 
 function StudentDashboard() {
   const navigate = useNavigate();
+  
   const profileQuery = useQuery({
     queryKey: ['profileStatus'],
     queryFn: getProfileStatus,
@@ -18,14 +19,19 @@ function StudentDashboard() {
 
   const enrollmentsQuery = useQuery({
     queryKey: ['myEnrollments'],
-    queryFn: getMyEnrollments,
+    queryFn: getMyEnrollmentsAPI, // Use the new function here
   });
 
-  const profilePayload = profileQuery.data?.data || profileQuery.data || {};
+  // Safely extract data accounting for Axios and the backend ApiResponse structure
+  const profilePayload = profileQuery.data?.data?.data || profileQuery.data?.data || {};
+  console.log('Profile status response:', profileQuery.data);
   const isComplete = profilePayload.isComplete ?? true;
   const missingFields = profilePayload.missingFields || [];
-  const enrollmentsPayload = enrollmentsQuery.data?.data || enrollmentsQuery.data || [];
-  const enrollments = Array.isArray(enrollmentsPayload) ? enrollmentsPayload : [];
+
+  // Assuming backend returns { data: { enrollments: [...] } } or an array directly
+  const rawEnrollments = enrollmentsQuery.data?.data?.data?.enrollments || enrollmentsQuery.data?.data?.data || [];
+  console.log('Enrollments response:', enrollmentsQuery.data);
+  const enrollments = Array.isArray(rawEnrollments) ? rawEnrollments : [];
 
   const enrolledCount = enrollments.filter(
     (enrollment) => enrollment.status === 'active' || enrollment.status === 'pending_details'
@@ -36,6 +42,7 @@ function StudentDashboard() {
   ).length;
 
   const activeEnrollments = enrollments.filter((enrollment) => enrollment.status === 'active');
+  
   const avgProgress = activeEnrollments.length
     ? Math.round(
         activeEnrollments.reduce(
@@ -79,6 +86,7 @@ function StudentDashboard() {
   return (
     <div className="flex flex-col gap-6">
       <ProfileCompletionBanner isComplete={isComplete} missingFields={missingFields} />
+      
       <div className="grid grid-cols-3 gap-4">
         <StatCard
           icon={BookOpen}
@@ -102,6 +110,7 @@ function StudentDashboard() {
           accentText="text-secondary-foreground"
         />
       </div>
+
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2">
           <div className="text-base font-medium text-foreground mb-3">My Courses</div>
