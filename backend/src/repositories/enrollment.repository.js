@@ -6,7 +6,7 @@ export const findEnrollmentByStudentCourse = (client, studentId, courseId) =>
 
 export const createEnrollment = (client, studentId, courseId) =>
     client.query(
-        "INSERT INTO enrollments (student_id, course_id) VALUES ($1, $2) RETURNING id, student_id, course_id, status, enrolled_at",
+        "INSERT INTO enrollments (student_id, course_id, status) VALUES ($1, $2, 'pending_payment') RETURNING id, student_id, course_id, status, enrolled_at",
         [studentId, courseId]
     );
 
@@ -27,4 +27,19 @@ export const updateEnrollmentStatus = (client, enrollmentId, status) =>
          RETURNING id, student_id, course_id, status, enrolled_at`,
         [status, enrollmentId]
     );
+
+export const getEnrollmentById = (client, enrollmentId) =>
+    client.query(
+        `SELECT id, student_id, course_id, status, enrolled_at
+         FROM enrollments
+         WHERE id = $1`,
+        [enrollmentId]
+    );
+
+export const deleteEnrollmentById = (client, enrollmentId) =>
+    client.query(
+        "DELETE FROM enrollments WHERE id = $1",
+        [enrollmentId]
+    );
+
 

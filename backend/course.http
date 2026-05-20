@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:5000/api/v1
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NjUwODYwLCJleHAiOjE3Nzg2NTE3NjB9.uiRbs78R0cJzaWvg_wkJtfUpoAXBdhsRjgsI4g2FH1g
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQyMTQwMzMyLTFjZDYtNGZiNi05OGUwLTA4ODAyZTdhYWQ4OCIsImVtYWlsIjoic3R1ZGVudDFAZXhhbXBsZS5jb20iLCJyb2xlIjoic3R1ZGVudCIsImlhdCI6MTc3OTE2ODkzOSwiZXhwIjoxNzc5MTY5ODM5fQ.r2MfAxosnV5I-6fxj_uHs2DEMLW31VCDYpvpvExR-2A
 @COURSE_ID = 97196bc7-6217-45f6-ab17-e4ec6b6c0886
 ### List published courses (public)
 GET {{baseUrl}}/courses

@@ -1,0 +1,40 @@
+@baseUrl = http://localhost:5000/api/v1
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc5MjUyOTg5LCJleHAiOjE3NzkyNTM4ODl9.qSqLLEkfozzUn0-JjOyfTxfRVwiIGTYBkuIksT5EM1U
+@enrollmentId = ca47361b-df2b-4994-924d-2ce0dcc5ad93
+@courseId = 97196bc7-6217-45f6-ab17-e4ec6b6c0886
+
+### Create enrollment (student)
+POST {{baseUrl}}/enrollments
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "courseId": "{{courseId}}"
+}
+
+### Update enrollment status (admin)
+PATCH {{baseUrl}}/enrollments/{{enrollmentId}}/status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### Change payment status (admin)
+PATCH {{baseUrl}}/enrollments/{{enrollmentId}}/payment-status
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "status": "active"
+}
+
+### Get enrollment by id (student/admin/instructor)
+# NOTE: This only works if the GET route is wired in backend routes.
+GET {{baseUrl}}/enrollments/{{enrollmentId}}
+Authorization: Bearer {{accessToken}}
+
+### Delete enrollment (admin)
+DELETE {{baseUrl}}/enrollments/{{enrollmentId}}
+Authorization: Bearer {{accessToken}}

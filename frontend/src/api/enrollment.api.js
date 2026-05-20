@@ -51,7 +51,20 @@ const mockEnrollments = [
 		},
 	},
 ];
-
+// {
+//   "statusCode": 200,
+//   "data": {
+//     "enrollment": {
+//       "id": "e2b754e2-5993-4237-bd6b-02e4fcd41712",
+//       "student_id": "d2140332-1cd6-4fb6-98e0-08802e7aad88",
+//       "course_id": "97196bc7-6217-45f6-ab17-e4ec6b6c0886",
+//       "status": "active",
+//       "enrolled_at": "2026-05-19T05:38:21.929Z"
+//     }
+//   },
+//   "message": "Enrollment retrieved",
+//   "success": true
+// }
 const getMyEnrollments = async () => {
 	// TODO: Replace mock data once GET /api/v1/enrollments/my is available.
 	return mockEnrollments;
