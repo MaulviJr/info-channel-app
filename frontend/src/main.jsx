@@ -59,7 +59,13 @@ const router = createBrowserRouter([
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: 'dashboard', element: <StudentDashboard /> },
           { path: 'profile', element: <StudentProfile /> },
-          { path: 'courses', element: <StudentCourse /> },
+          { path: 'courses', element: <StudentCourse />,
+            // children:[ {
+            //   path: 'browse', element: <CoursesPage />
+            // }
+            // ]
+           },
+           {path: 'courses/browse', element: <CoursesPage />},
           { path: 'enrollments/:id', element: <EnrollmentConfirmationPage /> },
         ],
       },

@@ -34,7 +34,7 @@ function StudentDashboard() {
   const enrollments = Array.isArray(rawEnrollments) ? rawEnrollments : [];
 
   const enrolledCount = enrollments.filter(
-    (enrollment) => enrollment.status === 'active' || enrollment.status === 'pending_details'
+    (enrollment) => enrollment.status === 'active' || enrollment.status === 'pending_payment'
   ).length;
 
   const completedCount = enrollments.filter(

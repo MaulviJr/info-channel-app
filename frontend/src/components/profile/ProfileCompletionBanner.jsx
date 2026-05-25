@@ -36,7 +36,7 @@ function ProfileCompletionBanner({ isComplete, missingFields }) {
       </div>
       <button
         type="button"
-        onClick={() => navigate('/profile')}
+        onClick={() => navigate('/student/profile')}
         className="bg-primary text-primary-foreground text-xs px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex-shrink-0"
       >
         Complete Profile

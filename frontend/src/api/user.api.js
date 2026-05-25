@@ -25,6 +25,11 @@ const getProfileStatusAPI = async () => {
     return response;
 };
 
+const getCurrentUserAPI = async () => {
+    const response = await api.get('/users/me');
+    return response;
+};
+
 const getProfileStatus = async () => {
     const response = await getProfileStatusAPI();
     return response.data;
@@ -122,6 +127,7 @@ export {
 
     getProfileStatusAPI,
     getProfileStatus,
+    getCurrentUserAPI,
 
     // Student
     updateStudentProfileAPI,
