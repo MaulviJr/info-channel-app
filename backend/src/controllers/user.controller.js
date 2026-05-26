@@ -543,39 +543,42 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
     const userId = decodedtoken?.id;
     console.log("Decoded refresh token for user ID:", userId);
     const client = await pool.connect();
-    const user = await findOneUserById(client, userId);
+    try {
+        const user = await findOneUserById(client, userId);
 
-    if (user.rowCount === 0) {
-        client.release();
-        throw new ApiError(401, "Invalid refresh token, so can't find user");
-    }
+        if (user.rowCount === 0) {
+            throw new ApiError(401, "Invalid refresh token, so can't find user");
+        }
 
-    const userRow = user.rows[0];
-    const accessToken = generateAccessToken(userRow);
-    const refreshToken = generateRefreshToken(userRow);
-    const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        const userRow = user.rows[0];
+        const accessToken = generateAccessToken(userRow);
+        const refreshToken = generateRefreshToken(userRow);
+        const refreshTokenExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    await updateUserRefreshToken(
-        client,
-        userRow.id,
-        refreshToken,
-        refreshTokenExpiresAt
-    );
-
-    const options = {
-        httpOnly: true,
-        secure: true,
-    };
-
-    res.status(200)
-    .cookie("AccessToken", accessToken, options)
-    .cookie("RefreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(200, {
-            accessToken,
+        await updateUserRefreshToken(
+            client,
+            userRow.id,
             refreshToken,
-        }, "Tokens refreshed")
-    );
+            refreshTokenExpiresAt
+        );
+
+        const options = {
+            httpOnly: true,
+            secure: true,
+        };
+
+        res.status(200)
+        .cookie("AccessToken", accessToken, options)
+        .cookie("RefreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(200, {
+                accessToken,
+                refreshToken,
+            }, "Tokens refreshed")
+        );
+    } finally {
+        client.release();
+    }
 });
 
 // GET    /api/v1/users/admin/users              → list all users (filterable by role)

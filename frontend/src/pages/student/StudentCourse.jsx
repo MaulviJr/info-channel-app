@@ -53,8 +53,13 @@ const StudentCourse = () => {
             Track your enrolled courses and completion status.
           </p>
         </div>
-        <div className="text-sm text-muted-foreground">
-          {enrollments.length} courses
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-muted-foreground">
+            {enrollments.length} courses
+          </div>
+          <Button size="sm" onClick={() => navigate('/student/courses/browse')}>
+            Browse Courses
+          </Button>
         </div>
       </div>
 

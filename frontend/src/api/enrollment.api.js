@@ -10,6 +10,14 @@ const createEnrollmentAPI = async (payload) => {
 };
 
 /**
+ * List all enrollments (admin only).
+ */
+const listEnrollmentsAPI = async (params = {}) => {
+	const response = await api.get('/enrollments', { params });
+	return response;
+};
+
+/**
  * Update the enrollment status (admin only).
  * @param {string} enrollmentId
  * @param {Object} payload
@@ -58,6 +66,7 @@ const deleteEnrollmentAPI = async (enrollmentId) => {
 
 export {
 	createEnrollmentAPI,
+	listEnrollmentsAPI,
 	updateEnrollmentStatusAPI,
 	// updateEnrollmentPaymentStatusAPI,
 	getEnrollmentByIdAPI,

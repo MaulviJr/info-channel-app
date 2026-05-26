@@ -123,7 +123,7 @@ const changeEnrollmentStatusHandler = asyncHandler(async (req, res) => {
 // });
 
 const getEnrollmentHandler = asyncHandler(async (req, res) => {
-    console.log("I am here in getEnrollmentHandler for user:", req.user);
+    // console.log("I am here in getEnrollmentHandler for user:", req.user);
     const paramsParsed = enrollmentIdSchema.safeParse(req.params);
     if (!paramsParsed.success) {
         throw new ApiError(400, "Validation failed", paramsParsed.error.issues);
@@ -179,7 +179,7 @@ const getEnrollmentHandler = asyncHandler(async (req, res) => {
 });
 
 const getMyEnrollmentsHandler = asyncHandler(async (req, res) => {
-    console.log("I am here in getMyEnrollmentsHandler for user:", req.user);
+    // console.log("I am here in getMyEnrollmentsHandler for user:", req.user);
     const query = `
         SELECT 
             e.id,
@@ -205,9 +205,9 @@ const getMyEnrollmentsHandler = asyncHandler(async (req, res) => {
         WHERE e.student_id = $1
         ORDER BY e.enrolled_at DESC
     `;
-
+// 
     const result = await pool.query(query, [req.user.id]);
-    console.log("Enrollments fetched for user:", req.user.id, "Enrollments:", result.rows);
+    // console.log("Enrollments fetched for user:", req.user.id, "Enrollments:", result.rows);
     return res.status(200).json(
         new ApiResponse(
             200,
@@ -240,7 +240,7 @@ const deleteEnrollmentHandler = asyncHandler(async (req, res) => {
     } finally {
         client.release();
     }
-
+// 
 }); 
 export {
     createEnrollmentHandler,

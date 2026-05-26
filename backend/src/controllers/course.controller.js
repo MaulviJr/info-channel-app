@@ -46,10 +46,14 @@ const listCourses = asyncHandler(async (req, res) => {
 
     // fetch courses with pagination and instructor name
     const client = await pool.connect();
-    const { rows: courses } = await findAllPublishedCourses(client, limit, offset);
+    try {
+        const { rows: courses } = await findAllPublishedCourses(client, limit, offset);
 
-    // return response with total count, current page, and limit
-    return res.status(200).json(new ApiResponse(200, { courses }, "Courses fetched successfully"));
+        // return response with total count, current page, and limit
+        return res.status(200).json(new ApiResponse(200, { courses }, "Courses fetched successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 // GET /api/v1/courses/:id
@@ -59,13 +63,17 @@ const listCourses = asyncHandler(async (req, res) => {
 const getCourseById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const client = await pool.connect();
-    const { rows } = await findCourseById(client, id);
-    if (rows.length === 0) {
-        throw new ApiError(404, "Course not found");
-    }
-    const course = rows[0];
+    try {
+        const { rows } = await findCourseById(client, id);
+        if (rows.length === 0) {
+            throw new ApiError(404, "Course not found");
+        }
+        const course = rows[0];
 
-    return res.status(200).json(new ApiResponse(200, { course }, "Course fetched successfully"));
+        return res.status(200).json(new ApiResponse(200, { course }, "Course fetched successfully"));
+    } finally {
+        client.release();
+    }
 });
 
 const createACourse = asyncHandler(async (req, res) => {
@@ -86,20 +94,24 @@ console.log("Creating course with data:", parsed.data, "by user:", req.user);
     const { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url } = parsed.data;
 
     const client = await pool.connect();
-    const instructorId = req.user?.id; // assuming req.user is populated by auth middleware
-    if(!instructorId) {
-        throw new ApiError(401, "Unable to identify instructor");
-    }
-    const { rows } = await createCourse(
-        client,
-        { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url },
-        instructorId
-    );
-    const course = rows[0];
+    try {
+        const instructorId = req.user?.id; // assuming req.user is populated by auth middleware
+        if(!instructorId) {
+            throw new ApiError(401, "Unable to identify instructor");
+        }
+        const { rows } = await createCourse(
+            client,
+            { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url },
+            instructorId
+        );
+        const course = rows[0];
 
-    return res.status(201).json(new ApiResponse(201,
-         { course }, 
-         "Course created successfully"));
+        return res.status(201).json(new ApiResponse(201,
+             { course }, 
+             "Course created successfully"));
+    } finally {
+        client.release();
+    }
 
 
 });
@@ -118,34 +130,37 @@ const updateCourse = asyncHandler(async (req, res) => {
     const { title, description, board_registration, admission_fee, monthly_fee, thumbnail_url } = parsed.data;
 
     const client = await pool.connect();
+    try {
+        const { rows } = await findCourseById(client, id);
+        if (rows.length === 0) {
+            throw new ApiError(404, "Course not found");
+        }
+        const course = rows[0];
 
-    const { rows } = await findCourseById(client, id);
-    if (rows.length === 0) {
-        throw new ApiError(404, "Course not found");
+        // Check if requester is instructor of the course or admin
+        if (course.instructor_id !== req.user.id && req.user.role !== "admin") {
+            throw new ApiError(403, "Forbidden: You don't have permission to update this course");
+        }
+
+        const updatePayload = {
+            title: title ?? course.title,
+            description: description ?? course.description,
+            board_registration: board_registration ?? course.board_registration,
+            admission_fee: admission_fee ?? course.admission_fee,
+            monthly_fee: monthly_fee ?? course.monthly_fee,
+            thumbnail_url: thumbnail_url ?? course.thumbnail_url,
+        };
+
+        const { rows: updatedRows } = await updateCourseInRepo(client, id, updatePayload);
+        const updatedCourse = updatedRows[0];
+
+        return res.status(200)
+        .json(new ApiResponse(200,
+             { course: updatedCourse }, 
+             "Course updated successfully"));
+    } finally {
+        client.release();
     }
-    const course = rows[0];
-
-    // Check if requester is instructor of the course or admin
-    if (course.instructor_id !== req.user.id && req.user.role !== "admin") {
-        throw new ApiError(403, "Forbidden: You don't have permission to update this course");
-    }
-
-    const updatePayload = {
-        title: title ?? course.title,
-        description: description ?? course.description,
-        board_registration: board_registration ?? course.board_registration,
-        admission_fee: admission_fee ?? course.admission_fee,
-        monthly_fee: monthly_fee ?? course.monthly_fee,
-        thumbnail_url: thumbnail_url ?? course.thumbnail_url,
-    };
-
-    const { rows: updatedRows } = await updateCourseInRepo(client, id, updatePayload);
-    const updatedCourse = updatedRows[0];
-
-    return res.status(200)
-    .json(new ApiResponse(200,
-         { course: updatedCourse }, 
-         "Course updated successfully"));
 
 });
 
@@ -155,21 +170,25 @@ const deleteCourse = asyncHandler(async (req, res) => {
 // - Return: { message: 'Course deleted' }
     const { id } = req.params;
     const client = await pool.connect();
-    const { rows } = await findCourseById(client, id);
+    try {
+        const { rows } = await findCourseById(client, id);
 
-    if (rows.length === 0) {
-        throw new ApiError(404, "Course not found");
+        if (rows.length === 0) {
+            throw new ApiError(404, "Course not found");
+        }
+
+        const course = rows[0];
+        console.log("Attempting to delete course:", course, "by user:", req.user);
+        if (req.user.role !== "admin" && course.instructor_id !== req.user.id) {
+            throw new ApiError(403, "Forbidden: You don't have permission to delete this course");
+        }
+
+        await deleteCourseInRepo(client, id);
+
+        return res.status(200).json(new ApiResponse(200, null, "Course deleted successfully"));
+    } finally {
+        client.release();
     }
-
-    const course = rows[0];
-    console.log("Attempting to delete course:", course, "by user:", req.user);
-    if (req.user.role !== "admin" && course.instructor_id !== req.user.id) {
-        throw new ApiError(403, "Forbidden: You don't have permission to delete this course");
-    }
-
-    await deleteCourseInRepo(client, id);
-
-    return res.status(200).json(new ApiResponse(200, null, "Course deleted successfully"));
 
 });
 
@@ -181,20 +200,24 @@ const toggleCoursePublish = asyncHandler(async (req, res) => {
 
     const { id } = req.params;
     const client = await pool.connect();
-    const { rows } = await findCourseById(client, id);
-    if (rows.length === 0) {
-        throw new ApiError(404, "Course not found");
+    try {
+        const { rows } = await findCourseById(client, id);
+        if (rows.length === 0) {
+            throw new ApiError(404, "Course not found");
+        }
+        const course = rows[0];
+        if (req.user.role !== "admin") {
+            throw new ApiError(403, "Forbidden: You don't have permission to publish/unpublish this course");
+        }
+        const newStatus = !course.is_published;
+        await client.query(
+            `UPDATE courses SET is_published = $1 WHERE id = $2`,
+            [newStatus, id]
+        );
+        return res.status(200).json(new ApiResponse(200, { is_published: newStatus }, `Course ${newStatus ? 'published' : 'unpublished'} successfully`));
+    } finally {
+        client.release();
     }
-    const course = rows[0];
-    if (req.user.role !== "admin") {
-        throw new ApiError(403, "Forbidden: You don't have permission to publish/unpublish this course");
-    }
-    const newStatus = !course.is_published;
-    await client.query(
-        `UPDATE courses SET is_published = $1 WHERE id = $2`,
-        [newStatus, id]
-    );
-    return res.status(200).json(new ApiResponse(200, { is_published: newStatus }, `Course ${newStatus ? 'published' : 'unpublished'} successfully`));
 });
 
 

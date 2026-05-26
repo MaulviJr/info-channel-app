@@ -51,7 +51,7 @@ const requireRole = (...roles) => (req, _, next) => {
     if (!req.user) {
         throw new ApiError(401, "Unauthorized");
     }
-    console.log("Checking roles:", req.user.role, "against required roles:", roles);
+    // console.log("Checking roles:", req.user.role, "against required roles:", roles);
     if (!roles.includes(req.user.role)) {
         throw new ApiError(403, "Forbidden");
     }

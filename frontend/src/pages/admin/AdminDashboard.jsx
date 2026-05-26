@@ -1,30 +1,59 @@
-import React from 'react'; // Make sure to import React if needed in your setup
-// import { useNavigate } from 'react-router-dom';
-// import { useAuth } from 'your-auth-context';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth.js';
+import { useState } from 'react';
+import { BookOpen, ClipboardList, Users, UserPlus } from 'lucide-react';
+import StatCard from '../../components/dashboard/StatCard';
 
 const AdminDashboard = () => {
-    const { logout } = useAuth();
-    const navigate = useNavigate();
-     
+    // TODO: Replace these placeholders with an admin stats API.
+    const [stats] = useState({
+        totalStudents: 0,
+        totalCourses: 0,
+        pendingEnrollments: 0,
+        staffMembers: 0,
+    });
+
     return (
-        <div className="p-8 text-center text-gray-400 text-sm">
-            AdminDashboard - coming soon
-            <div>
-                <button 
-                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                    // Added 'async' here to allow the use of 'await'
-                    onClick={async () => {
-                        await logout();
-                        navigate('/login');
-                    }}
-                >
-                    Logout
-                </button>
+        <div className="p-6 flex flex-col gap-6">
+            <div className="bg-card rounded-xl border border-border p-6 flex flex-col gap-4">
+                <div>
+                    <h1 className="text-xl font-semibold text-foreground">Welcome back</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Track platform activity and manage your academic operations.
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <StatCard
+                    icon={Users}
+                    label="Total students"
+                    value={stats.totalStudents}
+                    accentBg="bg-primary/15"
+                    accentText="text-primary"
+                />
+                <StatCard
+                    icon={BookOpen}
+                    label="Total courses"
+                    value={stats.totalCourses}
+                    accentBg="bg-accent/20"
+                    accentText="text-accent-foreground"
+                />
+                <StatCard
+                    icon={ClipboardList}
+                    label="Pending enrollments"
+                    value={stats.pendingEnrollments}
+                    accentBg="bg-secondary/70"
+                    accentText="text-secondary-foreground"
+                />
+                <StatCard
+                    icon={UserPlus}
+                    label="Staff members"
+                    value={stats.staffMembers}
+                    accentBg="bg-muted"
+                    accentText="text-foreground"
+                />
             </div>
         </div>
     );
-}; 
+};
 
 export default AdminDashboard;
