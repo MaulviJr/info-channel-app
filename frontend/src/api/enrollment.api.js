@@ -41,9 +41,9 @@ const updateEnrollmentStatusAPI = async (enrollmentId, payload) => {
  * Get a single enrollment by id.
  * @param {string} enrollmentId
  */
-const getEnrollmentByIdAPI = async () => {
-	console.log('Fetching enrollment details for ID:',);
-	const response = await api.get(`/enrollments/`);
+const getEnrollmentByIdAPI = async (enrollmentId) => {
+	console.log('Fetching enrollment details for ID:', enrollmentId);
+	const response = await api.get(`/enrollments/${enrollmentId}`);
 	console.log('Enrollment details:', response);
 	return response;
 };
@@ -54,6 +54,7 @@ const getMyEnrollmentsAPI = async () => {
 	console.log('My enrollments:', response.data.data);
 	return response;
 };
+
 
 /**
  * Delete an enrollment by id (admin only).

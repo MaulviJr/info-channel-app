@@ -5,7 +5,8 @@ import {
 	// changePaymentStatusHandler,
 	deleteEnrollmentHandler,
 	getEnrollmentHandler,
-	getMyEnrollmentsHandler
+	getMyEnrollmentsHandler,
+	listEnrollmentsHandler
 } from "../controllers/enrollment.controller.js";
 import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
 
@@ -26,5 +27,7 @@ router
 	.route("/:id")
 	.get(verifyJWT, getEnrollmentHandler)
 	.delete(verifyJWT, requireRole("admin"), deleteEnrollmentHandler);
+
+router.route("/").get(verifyJWT, listEnrollmentsHandler);
 
 export default router;

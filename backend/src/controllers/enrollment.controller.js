@@ -242,11 +242,45 @@ const deleteEnrollmentHandler = asyncHandler(async (req, res) => {
     }
 // 
 }); 
+
+
+const listEnrollmentsHandler = asyncHandler(async (req, res) => {
+  const baseQuery = `
+    SELECT
+      e.id,
+      e.status,
+      e.enrolled_at,
+      json_build_object('id', s.id, 'name', s.name, 'email', s.email) AS student,
+      json_build_object('id', c.id, 'title', c.title) AS course
+    FROM enrollments e
+    JOIN users s ON e.student_id = s.id
+    JOIN courses c ON e.course_id = c.id
+  `;
+
+  let query = baseQuery;
+  const params = [];
+
+  if (req.user.role === "teacher") {
+    query += " WHERE c.instructor_id = $1";
+    params.push(req.user.id);
+  } else if (req.user.role !== "admin") {
+    throw new ApiError(403, "Forbidden");
+  }
+
+  query += " ORDER BY e.enrolled_at DESC";
+
+  const result = await pool.query(query, params);
+  return res.status(200).json(
+    new ApiResponse(200, { enrollments: result.rows }, "Enrollments retrieved successfully")
+  );
+});
+
 export {
     createEnrollmentHandler,
     changeEnrollmentStatusHandler,
     // changePaymentStatusHandler,
     deleteEnrollmentHandler,
     getEnrollmentHandler,
-    getMyEnrollmentsHandler
+    getMyEnrollmentsHandler,
+    listEnrollmentsHandler
 };

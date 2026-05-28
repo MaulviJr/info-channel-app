@@ -774,6 +774,44 @@ const listCourseStudents = asyncHandler(async (req, res) => {
     }
 });
 
+const getFullStudentProfile = asyncHandler(async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const userResult = await findOneUserById(client, req.params.id);
+    if (userResult.rowCount === 0) {
+      throw new ApiError(404, "Student not found");
+    }
+
+    const user = userResult.rows[0];
+    if (user.role !== "student") {
+      throw new ApiError(400, "User is not a student");
+    }
+
+    const profileResult = await findStudentProfileByUserId(client, user.id);
+    if (profileResult.rowCount === 0) {
+      throw new ApiError(404, "Student profile not found");
+    }
+
+    const profileRow = profileResult.rows[0];
+    const completion = getProfileCompletion(profileRow);
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          ...user,
+          profile: mapStudentProfile(profileRow),
+          completion,
+        },
+        "Student profile retrieved successfully"
+      )
+    );
+  } finally {
+    client.release();
+  }
+});
+
+
 export {
     registerUser,
     loginUser,
@@ -791,6 +829,7 @@ export {
     updateUserStatus,
     deleteUser,
     listStudentsWithProfileStatus,
+    getFullStudentProfile,
 
     //teacher controllers
     getTeacherProfile,

@@ -8,7 +8,8 @@ import {
     getCourseStudents,
     createCourse,
     updateCourse as updateCourseInRepo,
-    deleteCourse as deleteCourseInRepo
+    deleteCourse as deleteCourseInRepo,
+    findAllCourses
 } from "../repositories/course.repository.js";
 import { pool } from "../db/pool.js";
 import {z} from "zod";

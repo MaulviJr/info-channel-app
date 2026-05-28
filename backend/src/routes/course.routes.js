@@ -16,7 +16,11 @@ router.route("/").get(listCourses);
 router.route("/:id").get(getCourseById);
 
 // Teacher/Admin
-router.route("/create-course").post(verifyJWT, requireRole("teacher"), createACourse);
+router.route("/create-course").post(
+  verifyJWT,
+  requireRole("teacher", "admin"),
+  createACourse
+);
 router
 	.route("/:id")
 	.put(verifyJWT, requireRole("teacher"), updateCourse)

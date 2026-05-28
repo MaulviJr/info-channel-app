@@ -100,6 +100,7 @@ const listAllUsersAPI = async (params = {}) => {
 
 const getUserByIdAPI = async (userId) => {
     const response = await api.get(`/users/admin/users/${userId}`);
+    console.log('getUserByIdAPI response:', response);
     return response;
 };
 
@@ -116,6 +117,11 @@ const deleteUserAPI = async (userId) => {
 const listStudentsWithProfileStatusAPI = async (params = {}) => {
     const response = await api.get('/users/admin/students', { params });
     return response;
+};
+
+const getStudentProfileByIdAPI = async (studentId) => {
+  const response = await api.get(`/users/admin/students/${studentId}`);
+  return response;
 };
 
 export { 
@@ -145,5 +151,6 @@ export {
     getUserByIdAPI,
     updateUserStatusAPI,
     deleteUserAPI,
-    listStudentsWithProfileStatusAPI
+    listStudentsWithProfileStatusAPI,
+    getStudentProfileByIdAPI
 };

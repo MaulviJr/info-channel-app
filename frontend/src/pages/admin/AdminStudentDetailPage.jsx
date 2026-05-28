@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { getUserByIdAPI } from '../../api/user.api.js';
+import { getUserByIdAPI,getStudentProfileByIdAPI} from '../../api/user.api.js';
 import Button from '../../components/common/Button';
 import ErrorAlert from '../../components/common/ErrorAlert';
 
@@ -45,7 +45,7 @@ const AdminStudentDetailPage = () => {
       setError('');
 
       try {
-        const response = await getUserByIdAPI(id);
+        const response = await getStudentProfileByIdAPI(id);
         const payload = response?.data?.data ?? response?.data ?? null;
 
         if (isMounted) {
