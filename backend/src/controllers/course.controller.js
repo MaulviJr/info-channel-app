@@ -57,6 +57,22 @@ const listCourses = asyncHandler(async (req, res) => {
     }
 });
 
+const listAllCoursesForStaff = asyncHandler(async (req, res) => {
+    const { page = 1, limit = 10 } = req.query;
+    const offset = (page - 1) * limit;
+
+    const client = await pool.connect();
+    try {
+        const { rows: courses } = await findAllCourses(client, limit, offset);
+
+        return res
+            .status(200)
+            .json(new ApiResponse(200, { courses }, "Courses fetched successfully"));
+    } finally {
+        client.release();
+    }
+});
+
 // GET /api/v1/courses/:id
 // - Return single course with instructor name
 // - If not published and requester is not admin/teacher, return 404
@@ -225,6 +241,7 @@ const toggleCoursePublish = asyncHandler(async (req, res) => {
 export {
 
     listCourses,
+    listAllCoursesForStaff,
     getCourseById,
     createACourse,
     updateCourse,

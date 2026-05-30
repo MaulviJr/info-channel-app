@@ -10,7 +10,7 @@ export const findAllPublishedCourses = (client, limit, offset) =>
 
 export const findAllCourses = (client, limit, offset) =>
     client.query(
-        `SELECT c.id, c.title, c.description, c.admission_fee, c.monthly_fee, u.name AS instructor_name
+        `SELECT c.id, c.title, c.description, c.admission_fee, c.monthly_fee, c.is_published, u.name AS instructor_name
          FROM courses c
          JOIN users u ON c.instructor_id = u.id
          LIMIT $1 OFFSET $2`,

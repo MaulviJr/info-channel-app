@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   deleteCourseAPI,
-  listCoursesAPI,
+  listAllCoursesForStaffAPI,
   toggleCoursePublishAPI,
 } from '../../api/course.api.js';
 import Button from '../../components/common/Button';
@@ -49,7 +49,7 @@ const AdminCoursesPage = () => {
       setError('');
 
       try {
-        const response = await listCoursesAPI({ page: 1, limit: 50 });
+        const response = await listAllCoursesForStaffAPI({ page: 1, limit: 50 });
         const list = getCoursesFromResponse(response);
         if (isMounted) {
           setCourses(list);

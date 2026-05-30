@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
 	listCourses,
+	listAllCoursesForStaff,
 	getCourseById,
 	createACourse,
 	updateCourse,
@@ -13,6 +14,9 @@ const router = Router();
 
 // Public
 router.route("/").get(listCourses);
+router
+	.route("/all")
+	.get(verifyJWT, requireRole("teacher", "admin"), listAllCoursesForStaff);
 router.route("/:id").get(getCourseById);
 
 // Teacher/Admin
