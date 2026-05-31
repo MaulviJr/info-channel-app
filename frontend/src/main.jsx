@@ -15,6 +15,7 @@ import StudentDashboard from './pages/student/StudentDashboard.jsx';
 import StudentCourse from './pages/student/StudentCourse.jsx';
 import StudentProfile from './pages/student/StudentProfile.jsx';
 import EnrollmentConfirmationPage from './pages/student/EnrollmentConfirmationPage.jsx';
+import StudentEnrollmentsPage from './pages/student/StudentEnrollmentsPage.jsx';
 import StudentLayout from './components/layout/StudentLayout.jsx';
 import AdminLayout from './components/layout/AdminLayout.jsx';
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
@@ -66,6 +67,7 @@ const router = createBrowserRouter([
             // ]
            },
            {path: 'courses/browse', element: <CoursesPage />},
+          { path: 'enrollments', element: <StudentEnrollmentsPage /> },
           { path: 'enrollments/:id', element: <EnrollmentConfirmationPage /> },
         ],
       },

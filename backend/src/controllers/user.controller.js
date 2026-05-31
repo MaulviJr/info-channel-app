@@ -589,6 +589,27 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
 
 // admin controllers to be implemnented below
 
+const getAdminStatsHandler = asyncHandler(async (req, res) => {
+    const statsQuery = `
+        SELECT
+            (SELECT COUNT(*) FROM users WHERE role = 'student') AS "totalStudents",
+            (SELECT COUNT(*) FROM courses) AS "totalCourses",
+            (SELECT COUNT(*) FROM enrollments WHERE status = 'pending_payment') AS "pendingEnrollments",
+            (SELECT COUNT(*) FROM users WHERE role IN ('teacher', 'admin')) AS "staffMembers"
+    `;
+
+    const result = await pool.query(statsQuery);
+    const row = result.rows[0];
+    const stats = {
+        totalStudents: parseInt(row.totalStudents, 10),
+        totalCourses: parseInt(row.totalCourses, 10),
+        pendingEnrollments: parseInt(row.pendingEnrollments, 10),
+        staffMembers: parseInt(row.staffMembers, 10),
+    };
+
+    res.status(200).json(new ApiResponse(200, { stats }, "Admin stats retrieved"));
+});
+
 const listAllUsers = asyncHandler(async (req, res) => {
     // Implementation for listing all users with optional role filter
     const client = await pool.connect();
@@ -825,6 +846,7 @@ export {
     createTeacher,
     createAdmin,
     listAllUsers,
+    getAdminStatsHandler,
     getUserById,
     updateUserStatus,
     deleteUser,

@@ -119,6 +119,11 @@ const listStudentsWithProfileStatusAPI = async (params = {}) => {
     return response;
 };
 
+const getAdminStatsAPI = async () => {
+    const response = await api.get('/users/admin/stats');
+    return response.data;
+};
+
 const getStudentProfileByIdAPI = async (studentId) => {
   const response = await api.get(`/users/admin/students/${studentId}`);
   return response;
@@ -152,5 +157,6 @@ export {
     updateUserStatusAPI,
     deleteUserAPI,
     listStudentsWithProfileStatusAPI,
-    getStudentProfileByIdAPI
+    getStudentProfileByIdAPI,
+    getAdminStatsAPI
 };

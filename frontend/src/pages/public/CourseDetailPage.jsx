@@ -57,7 +57,14 @@ const CourseDetailPage = () => {
         return;
       }
 
-      await enrollMutation.mutateAsync({ courseId: id });
+      const response = await enrollMutation.mutateAsync({ courseId: id });
+      const enrollmentId = response?.data?.data?.enrollment?.id;
+
+      if (enrollmentId) {
+        navigate(`/student/enrollments/${enrollmentId}`);
+        return;
+      }
+
       alert('Enrollment requested. Status is pending payment.');
       navigate('/student/courses');
     } catch (error) {

@@ -18,7 +18,8 @@ import {
 	updateTeacherProfile,
 	updateStudentProfileHandler,
 	updateUserStatus,
-	getFullStudentProfile
+	getFullStudentProfile,
+	getAdminStatsHandler
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
@@ -46,6 +47,9 @@ router
 router
 	.route("/admin/create-admin")
 	.post(verifyJWT, requireRole("admin"), createAdmin);
+router
+	.route("/admin/stats")
+	.get(verifyJWT, requireRole("admin"), getAdminStatsHandler);
 
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshTokenHandler);

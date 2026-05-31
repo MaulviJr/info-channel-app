@@ -1,10 +1,18 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { BarChart2, BookOpen, LayoutDashboard, LogOut, User } from 'lucide-react';
+import {
+  BarChart2,
+  BookOpen,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  User,
+} from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const navItems = [
   { to: '/student/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/student/courses', label: 'My Courses', icon: BookOpen },
+  { to: '/student/enrollments', label: 'Enrollments', icon: ClipboardList },
   { to: '/student/profile', label: 'My Profile', icon: User },
   { to: '/student/progress', label: 'Progress', icon: BarChart2 },
 ];
