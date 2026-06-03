@@ -29,6 +29,10 @@ import TeacherLayout from './components/layout/TeacherLayout.jsx';
 import TeacherDashboard from './pages/teacher/TeacherDashboard.jsx';
 import TeacherCourseStudentsPage from './pages/teacher/TeacherCourseStudentsPage.jsx';
 import TeacherProfilePage from './pages/teacher/TeacherProfilePage.jsx';
+import TeacherCreateCourse from './pages/teacher/TeacherCreateCourse.jsx';
+import TeacherStudents from './pages/teacher/TeacherStudents.jsx';
+import TeacherCourses from './pages/teacher/TeacherCourses.jsx';
+
 
 const router = createBrowserRouter([
   {
@@ -101,6 +105,9 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <TeacherDashboard /> },
           { path: 'courses/:id', element: <TeacherCourseStudentsPage /> },
+           { path: 'courses/new', element: <TeacherCreateCourse /> },
+           { path: 'my-students', element: <TeacherStudents /> },
+           { path: 'courses', element: <TeacherCourses /> },
           { path: 'profile', element: <TeacherProfilePage /> },
         ],
       },
