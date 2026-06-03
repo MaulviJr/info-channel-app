@@ -610,6 +610,96 @@ const getAdminStatsHandler = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, { stats }, "Admin stats retrieved"));
 });
 
+const enrollmentsByMonthSQL = `
+    SELECT
+        TO_CHAR(DATE_TRUNC('month', enrolled_at), 'Mon YYYY') AS month,
+        TO_CHAR(DATE_TRUNC('month', enrolled_at), 'YYYY-MM') AS month_key,
+        COUNT(*) AS enrollments
+    FROM enrollments
+    WHERE enrolled_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+    GROUP BY DATE_TRUNC('month', enrolled_at)
+    ORDER BY DATE_TRUNC('month', enrolled_at) ASC;
+`;
+
+const revenueByMonthSQL = `
+    SELECT
+        TO_CHAR(DATE_TRUNC('month', e.enrolled_at), 'Mon YYYY') AS month,
+        TO_CHAR(DATE_TRUNC('month', e.enrolled_at), 'YYYY-MM') AS month_key,
+        COALESCE(SUM(c.admission_fee), 0) AS revenue
+    FROM enrollments e
+    JOIN courses c ON c.id = e.course_id
+    WHERE e.status IN ('active', 'completed')
+    AND e.enrolled_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+    GROUP BY DATE_TRUNC('month', e.enrolled_at)
+    ORDER BY DATE_TRUNC('month', e.enrolled_at) ASC;
+`;
+
+const coursePopularitySQL = `
+    SELECT
+        c.title AS course,
+        COUNT(e.id) AS students
+    FROM courses c
+    LEFT JOIN enrollments e ON e.course_id = c.id
+        AND e.status IN ('active', 'completed')
+    WHERE c.is_published = true
+    GROUP BY c.id, c.title
+    ORDER BY students DESC
+    LIMIT 6;
+`;
+
+const profileCompletionSQL = `
+    SELECT
+        COUNT(*) FILTER (
+            WHERE cell_number IS NOT NULL
+            AND cnic IS NOT NULL
+            AND date_of_birth IS NOT NULL
+            AND father_name IS NOT NULL
+            AND father_cell_number IS NOT NULL
+            AND address IS NOT NULL
+            AND education IS NOT NULL
+            AND lead_source IS NOT NULL
+        ) AS completed,
+        COUNT(*) AS total
+    FROM student_profiles;
+`;
+
+const getAdminChartsHandler = asyncHandler(async (req, res) => {
+    const [enrollmentsRes, revenueRes, popularityRes, completionRes] =
+        await Promise.all([
+            pool.query(enrollmentsByMonthSQL),
+            pool.query(revenueByMonthSQL),
+            pool.query(coursePopularitySQL),
+            pool.query(profileCompletionSQL),
+        ]);
+
+    const completionRow = completionRes.rows[0];
+    const total = parseInt(completionRow.total, 10);
+    const completed = parseInt(completionRow.completed, 10);
+
+    return res.status(200).json(new ApiResponse(200, {
+        charts: {
+            enrollmentsByMonth: enrollmentsRes.rows.map((row) => ({
+                month: row.month,
+                enrollments: parseInt(row.enrollments, 10),
+            })),
+            revenueByMonth: revenueRes.rows.map((row) => ({
+                month: row.month,
+                revenue: parseFloat(row.revenue),
+            })),
+            coursePopularity: popularityRes.rows.map((row) => ({
+                course: row.course.length > 20
+                    ? row.course.substring(0, 20) + "..."
+                    : row.course,
+                students: parseInt(row.students, 10),
+            })),
+            profileCompletion: [
+                { name: "Complete", value: completed },
+                { name: "Incomplete", value: total - completed },
+            ],
+        },
+    }, "Admin charts retrieved"));
+});
+
 const listAllUsers = asyncHandler(async (req, res) => {
     // Implementation for listing all users with optional role filter
     const client = await pool.connect();
@@ -847,6 +937,7 @@ export {
     createAdmin,
     listAllUsers,
     getAdminStatsHandler,
+    getAdminChartsHandler,
     getUserById,
     updateUserStatus,
     deleteUser,
