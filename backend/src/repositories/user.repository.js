@@ -167,3 +167,53 @@ export const listStudentsWithProfiles = (client, limit, offset) =>
         `,
         [limit, offset]
     );
+
+
+export const getTeacherStats = (client, teacherId) =>
+    client.query(
+        `SELECT
+    (
+        SELECT COUNT(*)
+        FROM courses
+        WHERE instructor_id = $1
+    ) AS "totalCourses",
+    (
+        SELECT COUNT(DISTINCT e.student_id)
+        FROM enrollments e
+        JOIN courses c ON c.id = e.course_id
+        WHERE c.instructor_id = $1
+        AND e.status IN ('active', 'completed')
+    ) AS "totalStudents";`,[teacherId])
+    ;
+
+export const getStudentsForTeacher = (client, teacherId) =>
+    client.query(
+        `SELECT
+    TO_CHAR(DATE_TRUNC('month', e.enrolled_at), 'Mon YYYY') AS month,
+    COUNT(DISTINCT e.student_id) AS students
+FROM enrollments e
+JOIN courses c ON c.id = e.course_id
+WHERE c.instructor_id = $1
+AND e.status IN ('active', 'completed')
+AND e.enrolled_at >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+GROUP BY DATE_TRUNC('month', e.enrolled_at)
+ORDER BY DATE_TRUNC('month', e.enrolled_at) ASC;
+    `, [teacherId]
+    )
+
+    export const getCoursePopularityForTeacher = (client, teacherId) =>
+    client.query(
+        `SELECT
+    CASE
+        WHEN LENGTH(c.title) > 25
+        THEN SUBSTRING(c.title, 1, 25) || '...'
+        ELSE c.title
+    END AS course,
+    COUNT(e.id) AS students
+FROM courses c
+LEFT JOIN enrollments e ON e.course_id = c.id
+    AND e.status IN ('active', 'completed')
+WHERE c.instructor_id = $1
+GROUP BY c.id, c.title
+ORDER BY students DESC;` , [teacherId]
+    );

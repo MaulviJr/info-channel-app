@@ -20,7 +20,9 @@ import {
 	updateUserStatus,
 	getFullStudentProfile,
 	getAdminStatsHandler,
-	getAdminChartsHandler
+	getAdminChartsHandler,
+	getTeacherStatsHandler,
+	getTeacherChartsHandler
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
@@ -83,5 +85,7 @@ router
 router
 	.route("/teacher/my-courses/:id/students")
 	.get(verifyJWT, requireRole("teacher"), listCourseStudents);
+router.route("/teacher/stats").get(verifyJWT, requireRole("teacher"), getTeacherStatsHandler);
+router.route("/teacher/charts").get(verifyJWT, requireRole("teacher"), getTeacherChartsHandler);
 
 export default router;

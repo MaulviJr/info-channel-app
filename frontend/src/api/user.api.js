@@ -76,6 +76,16 @@ const listCourseStudentsAPI = async (courseId, params = {}) => {
     return response;
 };
 
+const getTeacherStatsAPI = async () => {
+    const response = await api.get('/users/teacher/stats');
+    return response.data;
+};
+
+const getTeacherChartsAPI = async () => {
+    const response = await api.get('/users/teacher/charts');
+    return response.data;
+}
+
 /**
  * ==========================================
  * ADMIN ENDPOINTS
@@ -153,6 +163,8 @@ export {
     updateTeacherProfileAPI,
     listTeacherCoursesAPI,
     listCourseStudentsAPI,
+    getTeacherStatsAPI,
+    getTeacherChartsAPI,
 
     // Admin
     createTeacherAPI,

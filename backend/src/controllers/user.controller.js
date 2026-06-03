@@ -21,7 +21,10 @@ import {
     updateUserRefreshToken,
     listUsers,
     listStudentsWithProfiles,
-    deleteUserById
+    deleteUserById,
+    getStudentsForTeacher,
+    getCoursePopularityForTeacher,
+    getTeacherStats
 } from "../repositories/user.repository.js";
 import {
     findCoursesByInstructorId
@@ -859,6 +862,69 @@ const updateTeacherProfile = asyncHandler(async (req, res) => {
     }
 });
 
+// const statsSQL = 
+
+
+const getTeacherStatsHandler = asyncHandler(async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const statsResult = await getTeacherStats(client, req.user.id);
+        const row = statsResult.rows[0];
+        
+
+    return res.status(200).json(
+        new ApiResponse(200, {
+            stats: {
+                totalCourses:  parseInt(row.totalCourses, 10),
+                totalStudents: parseInt(row.totalStudents, 10),
+            }
+        }, 'Teacher stats retrieved')
+    );
+    } catch (error) {
+
+        console.error(error);
+        throw new ApiError(500, "Failed to get teacher stats");
+
+    } finally {
+        client.release();
+    }
+}); 
+
+const getTeacherChartsHandler = asyncHandler(async (req, res) => {
+  const client = await pool.connect();
+
+    try {
+        // 2. Execute parallel queries using the client
+        const [studentsOverTimeRes, coursePopularityRes] = await Promise.all([
+            getStudentsForTeacher(client, req.user.id),
+            getCoursePopularityForTeacher(client, req.user.id),
+        ]);
+
+        // 3. Format and return the response
+        return res.status(200).json(
+            new ApiResponse(200, {
+                charts: {
+                    studentsOverTime: studentsOverTimeRes.rows.map(r => ({
+                        month: r.month,
+                        students: parseInt(r.students, 10),
+                    })),
+                    coursePopularity: coursePopularityRes.rows.map(r => ({
+                        course: r.course,
+                        students: parseInt(r.students, 10),
+                    })),
+                }
+            }, 'Teacher charts retrieved')
+        );
+    } catch (error) {
+        // 4. Pass the error up so asyncHandler and your global error middleware can process it
+        throw error;
+    } finally {
+        // 5. Always release the client back to the pool, even if an error occurred
+        if (client) {
+            client.release();
+        }
+    }
+});
 const listTeacherCourses = asyncHandler(async (req, res) => {
     // Implementation for listing courses assigned to the teacher
     //take teacher id from req.user.id and then find courses from course repository where instructor_id = teacher id
@@ -949,4 +1015,6 @@ export {
     updateTeacherProfile,
     listTeacherCourses,
     listCourseStudents,
+    getTeacherStatsHandler,
+    getTeacherChartsHandler,
 }
