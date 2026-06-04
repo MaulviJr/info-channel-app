@@ -63,7 +63,9 @@ const listAllCoursesForStaff = asyncHandler(async (req, res) => {
 
     const client = await pool.connect();
     try {
-        const { rows: courses } = await findAllCourses(client, limit, offset);
+        const { rows: courses } = req.user?.role === 'teacher'
+            ? await findCoursesByInstructorId(client, req.user.id, limit, offset)
+            : await findAllCourses(client, limit, offset);
 
         return res
             .status(200)

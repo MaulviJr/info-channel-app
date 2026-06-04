@@ -76,6 +76,11 @@ const listCourseStudentsAPI = async (courseId, params = {}) => {
     return response;
 };
 
+const listTeacherStudentsAPI = async (params = {}) => {
+    const response = await api.get('/users/teacher/my-students', { params });
+    return response;
+};
+
 const getTeacherStatsAPI = async () => {
     const response = await api.get('/users/teacher/stats');
     return response.data;
@@ -163,6 +168,7 @@ export {
     updateTeacherProfileAPI,
     listTeacherCoursesAPI,
     listCourseStudentsAPI,
+    listTeacherStudentsAPI,
     getTeacherStatsAPI,
     getTeacherChartsAPI,
 

@@ -11,6 +11,7 @@ import {
 	listCourseStudents,
 	listStudentsWithProfileStatus,
 	listTeacherCourses,
+	listTeacherStudents,
 	loginUser,
 	logoutUser,
 	refreshTokenHandler,
@@ -85,6 +86,9 @@ router
 router
 	.route("/teacher/my-courses/:id/students")
 	.get(verifyJWT, requireRole("teacher"), listCourseStudents);
+router
+	.route("/teacher/my-students")
+	.get(verifyJWT, requireRole("teacher"), listTeacherStudents);
 router.route("/teacher/stats").get(verifyJWT, requireRole("teacher"), getTeacherStatsHandler);
 router.route("/teacher/charts").get(verifyJWT, requireRole("teacher"), getTeacherChartsHandler);
 

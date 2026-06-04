@@ -18,16 +18,20 @@ import {
     findOneUserById,
     findOneUserByEmailMinimal,
     updateStudentProfile,
+    updateUserProfile,
     updateUserRefreshToken,
     listUsers,
     listStudentsWithProfiles,
     deleteUserById,
     getStudentsForTeacher,
     getCoursePopularityForTeacher,
-    getTeacherStats
+    getTeacherStats,
+   
 } from "../repositories/user.repository.js";
 import {
-    findCoursesByInstructorId
+    findCoursesByInstructorId,
+    getTeacherStudents,
+     getCourseStudents
 } from "../repositories/course.repository.js";
 import jwt from "jsonwebtoken";
 const emptyToUndefined = (value) => {
@@ -844,9 +848,11 @@ const updateTeacherProfile = asyncHandler(async (req, res) => {
         }
         const { name, email } = parsed.data;
 
-        const existingUser = await findOneUserByEmailMinimal(client, email);
-        if (existingUser.rowCount > 0 && existingUser.rows[0].id !== req.user.id) {
-            throw new ApiError(409, "Email already exists");
+        if (email !== undefined) {
+            const existingUser = await findOneUserByEmailMinimal(client, email);
+            if (existingUser.rowCount > 0 && existingUser.rows[0].id !== req.user.id) {
+                throw new ApiError(409, "Email already exists");
+            }
         }
         const updatedUser = await updateUserProfile(client, req.user.id, name, email);
 
@@ -929,12 +935,14 @@ const listTeacherCourses = asyncHandler(async (req, res) => {
     // Implementation for listing courses assigned to the teacher
     //take teacher id from req.user.id and then find courses from course repository where instructor_id = teacher id
 
-    const cient = await pool.connect();
+    const client = await pool.connect();
     try {
-        const coursesResult = await findCoursesByInstructorId(cient, req.user.id, 10, 0);
-        res.status(200).json(new ApiResponse(200, coursesResult.rows, "Courses fetched successfully"));
+        const limit = Number.parseInt(req.query.limit ?? "10", 10) || 10;
+        const offset = Number.parseInt(req.query.offset ?? "0", 10) || 0;
+        const coursesResult = await findCoursesByInstructorId(client, req.user.id, limit, offset);
+        res.status(200).json(new ApiResponse(200, { courses: coursesResult.rows }, "Courses fetched successfully"));
     } finally {
-        cient.release();
+        client.release();
     }
 }   );
 
@@ -942,10 +950,56 @@ const listCourseStudents = asyncHandler(async (req, res) => {
     // Implementation for listing students enrolled in a specific course
     const client = await pool.connect();
     try {
-        const studentsResult = await getCourseStudents(client, req.params.id, 10, 0);
-        res.status(200).json(new ApiResponse(200,
-             studentsResult.rows, 
-             "Students fetched successfully"));
+        const limit = Number.parseInt(req.query.limit ?? "10", 10) || 10;
+        const offset = Number.parseInt(req.query.offset ?? "0", 10) || 0;
+        const studentsResult = await getCourseStudents(client, req.params.id, limit, offset);
+        const students = studentsResult.rows.map((row) => ({
+            enrollmentId: row.enrollment_id,
+            id: row.student_id,
+            name: row.name,
+            email: row.email,
+            status: row.status,
+            enrolledAt: row.enrolled_at,
+            course: {
+                id: row.course_id,
+                title: row.course_title,
+                thumbnailUrl: row.course_thumbnail_url,
+            },
+            progress: {
+                completedLectures: Number.parseInt(row.completed_lectures, 10) || 0,
+                totalLectures: Number.parseInt(row.total_lectures, 10) || 0,
+                percent: Number.parseInt(row.percent, 10) || 0,
+            },
+        }));
+
+        res.status(200).json(new ApiResponse(200, {
+            course: students[0]?.course || { id: req.params.id },
+            students,
+        }, "Students fetched successfully"));
+    } finally {
+        client.release();
+    }
+});
+
+const listTeacherStudents = asyncHandler(async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const limit = Number.parseInt(req.query.limit ?? "20", 10) || 20;
+        const offset = Number.parseInt(req.query.offset ?? "0", 10) || 0;
+        const result = await getTeacherStudents(client, req.user.id, limit, offset);
+        const students = result.rows.map((row) => ({
+            id: row.id,
+            name: row.name,
+            email: row.email,
+            coursesCount: Number.parseInt(row.courses_count, 10) || 0,
+            activeEnrollments: Number.parseInt(row.active_enrollments, 10) || 0,
+            completedEnrollments: Number.parseInt(row.completed_enrollments, 10) || 0,
+            lastEnrolledAt: row.last_enrolled_at,
+        }));
+
+        return res.status(200).json(
+            new ApiResponse(200, { students }, "Teacher students fetched successfully")
+        );
     } finally {
         client.release();
     }
@@ -1015,6 +1069,7 @@ export {
     updateTeacherProfile,
     listTeacherCourses,
     listCourseStudents,
+    listTeacherStudents,
     getTeacherStatsHandler,
     getTeacherChartsHandler,
 }

@@ -11,6 +11,11 @@ const listAllCoursesForStaffAPI = async (params = {}) => {
     return response;
 };
 
+const listMyCoursesAPI = async (params = {}) => {
+    const response = await api.get('/courses/all', { params });
+    return response;
+};
+
 const getCourseByIdAPI = async (courseId) => {
     const response = await api.get(`/courses/${courseId}`);
     return response;
@@ -39,6 +44,7 @@ const toggleCoursePublishAPI = async (courseId) => {
 export {
     listCoursesAPI,
     listAllCoursesForStaffAPI,
+    listMyCoursesAPI,
     getCourseByIdAPI,
     createCourseAPI,
     updateCourseAPI,

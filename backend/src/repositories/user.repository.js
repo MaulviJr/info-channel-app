@@ -108,6 +108,16 @@ export const updateStudentProfile = (
         ]
     );
 
+    export const updateUserProfile = (client, userId, name, email) =>
+        client.query(
+            `UPDATE users
+             SET name = COALESCE($1, name),
+                 email = COALESCE($2, email)
+             WHERE id = $3
+             RETURNING id, name, email, role, created_at`,
+            [name, email, userId]
+        );
+
 export const updateUserRefreshToken = (
     client,
     userId,
