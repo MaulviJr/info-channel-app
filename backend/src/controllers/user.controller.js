@@ -206,7 +206,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
         await client.query("COMMIT");
 
-        res.status(201).json(
+        return res.status(201).json(
             new ApiResponse(201, {
                 id: user.id,
                 name: user.name,
@@ -268,7 +268,7 @@ const createUserWithRole = async (req, res, role) => {
         await client.query("COMMIT");
 
         const user = userInsert.rows[0];
-        res.status(201).json(
+        return res.status(201).json(
             new ApiResponse(
                 201,
                 {
@@ -370,7 +370,7 @@ const updateStudentProfileHandler = asyncHandler(async (req, res) => {
         const profile = updatedProfile.rows[0];
         const completion = getProfileCompletion(profile);
 
-        res.status(200).json(
+        return res.status(200).json(
             new ApiResponse(
                 200,
                 {
@@ -432,7 +432,7 @@ const loginUser = asyncHandler(async (req, res) => {
             secure: true,
         };
 
-        res.status(200)
+        return res.status(200)
         .cookie("AccessToken", accessToken, options)
         .cookie("RefreshToken", refreshToken, options)
         .json(
@@ -470,7 +470,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
             }
         }
 
-        res.status(200).json(
+        return res.status(200).json(
             new ApiResponse(200, {
                 user: {
                     id: req.user.id,
@@ -501,7 +501,7 @@ const getProfileStatus = asyncHandler(async (req, res) => {
         const profile = profileResult.rows[0];
         const completion = getProfileCompletion(profile);
 
-        res.status(200).json(
+        return res.status(200).json(
             new ApiResponse(200, {
                 completion,
             })
@@ -525,7 +525,7 @@ const logoutUser = asyncHandler(async (req, res) => {
     }     finally {
         client.release();
     }
-    res.status(200)
+    return res.status(200)
     .clearCookie("AccessToken")
     .clearCookie("RefreshToken")
     .json(new ApiResponse(200, null, "Logged out successfully"));
@@ -574,7 +574,7 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
             secure: true,
         };
 
-        res.status(200)
+        return res.status(200)
         .cookie("AccessToken", accessToken, options)
         .cookie("RefreshToken", refreshToken, options)
         .json(
@@ -614,7 +614,7 @@ const getAdminStatsHandler = asyncHandler(async (req, res) => {
         staffMembers: parseInt(row.staffMembers, 10),
     };
 
-    res.status(200).json(new ApiResponse(200, { stats }, "Admin stats retrieved"));
+    return res.status(200).json(new ApiResponse(200, { stats }, "Admin stats retrieved"));
 });
 
 const enrollmentsByMonthSQL = `
@@ -718,7 +718,7 @@ const listAllUsers = asyncHandler(async (req, res) => {
         } else {
             usersResult = await listUsers(client, 100, 0); // default limit and offset
         }
-        res.status(200).json(new ApiResponse(200, usersResult.rows, "Users listed successfully"));
+        return res.status(200).json(new ApiResponse(200, usersResult.rows, "Users listed successfully"));
     } finally {
         client.release();
     }
@@ -732,7 +732,7 @@ const getUserById = asyncHandler(async (req, res) => {
         if (!user) {
             throw new ApiError(404, "User not found");
         }
-        res.status(200).json(new ApiResponse(200, user.rows[0], "User retrieved successfully"));
+        return res.status(200).json(new ApiResponse(200, user.rows[0], "User retrieved successfully"));
     } finally {
         client.release();
     }
@@ -751,7 +751,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 
     try {
         await deleteUserById(client, userId);
-        res.status(200).json(new ApiResponse(200, null, "User deleted successfully"));
+        return res.status(200).json(new ApiResponse(200, null, "User deleted successfully"));
     } finally {
         client.release();
     }
@@ -780,7 +780,7 @@ const listStudentsWithProfileStatus = asyncHandler(async (req, res) => {
             };
         });
 
-        res.status(200).json(
+        return res.status(200).json(
             new ApiResponse(
                 200,
                 students,
@@ -826,7 +826,7 @@ const getTeacherProfile = asyncHandler(async (req, res) => {
         if (!user) {
             throw new ApiError(404, "Teacher not found");
         }
-        res.status(200).json(new ApiResponse(200, {
+        return res.status(200).json(new ApiResponse(200, {
             id: user.rows[0].id,
             name: user.rows[0].name,
             email: user.rows[0].email,
@@ -856,7 +856,7 @@ const updateTeacherProfile = asyncHandler(async (req, res) => {
         }
         const updatedUser = await updateUserProfile(client, req.user.id, name, email);
 
-        res.status(200).json(new ApiResponse(200, {
+        return res.status(200).json(new ApiResponse(200, {
             id: updatedUser.rows[0].id,
             name: updatedUser.rows[0].name,
             email: updatedUser.rows[0].email,
@@ -940,7 +940,7 @@ const listTeacherCourses = asyncHandler(async (req, res) => {
         const limit = Number.parseInt(req.query.limit ?? "10", 10) || 10;
         const offset = Number.parseInt(req.query.offset ?? "0", 10) || 0;
         const coursesResult = await findCoursesByInstructorId(client, req.user.id, limit, offset);
-        res.status(200).json(new ApiResponse(200, { courses: coursesResult.rows }, "Courses fetched successfully"));
+        return res.status(200).json(new ApiResponse(200, { courses: coursesResult.rows }, "Courses fetched successfully"));
     } finally {
         client.release();
     }
@@ -972,7 +972,7 @@ const listCourseStudents = asyncHandler(async (req, res) => {
             },
         }));
 
-        res.status(200).json(new ApiResponse(200, {
+        return res.status(200).json(new ApiResponse(200, {
             course: students[0]?.course || { id: req.params.id },
             students,
         }, "Students fetched successfully"));
@@ -1026,17 +1026,17 @@ const getFullStudentProfile = asyncHandler(async (req, res) => {
     const profileRow = profileResult.rows[0];
     const completion = getProfileCompletion(profileRow);
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          ...user,
-          profile: mapStudentProfile(profileRow),
-          completion,
-        },
-        "Student profile retrieved successfully"
-      )
-    );
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                {
+                    ...user,
+                    profile: mapStudentProfile(profileRow),
+                    completion,
+                },
+                "Student profile retrieved successfully"
+            )
+        );
   } finally {
     client.release();
   }

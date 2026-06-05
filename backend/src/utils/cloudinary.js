@@ -28,4 +28,21 @@ const uploadImage = async (localFilePath)=>{
     }
 }
 
-export { cloudinary, uploadImage };
+const uploadVideo = async (localFilePath) => {
+    try {
+        if (!localFilePath) return null;
+        const response = await cloudinary.uploader.upload(localFilePath, {
+            resource_type: "video"
+        });
+        fs.unlinkSync(localFilePath);
+        return response;
+    } catch (error) {
+        console.log("Couldn't upload video for some reasons: ", error);
+        if (localFilePath) {
+            fs.unlinkSync(localFilePath);
+        }
+        return null;
+    }
+};
+
+export { cloudinary, uploadImage, uploadVideo };

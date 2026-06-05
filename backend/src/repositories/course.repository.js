@@ -36,6 +36,42 @@ export const findCoursesByInstructorId = (client, instructorId, limit, offset) =
         [instructorId, limit, offset]
     );
 
+// export const getCourseStudents = (client, courseId, limit, offset) =>
+//     client.query(
+//         `SELECT
+//             e.id AS enrollment_id,
+//             u.id AS student_id,
+//             u.name,
+//             u.email,
+//             e.status,
+//             e.enrolled_at,
+//             c.id AS course_id,
+//             c.title AS course_title,
+//             c.thumbnail_url AS course_thumbnail_url,
+//             COALESCE(progress_stats.completed_lectures, 0) AS completed_lectures,
+//             COALESCE(progress_stats.total_lectures, 0) AS total_lectures,
+//             CASE
+//                 WHEN COALESCE(progress_stats.total_lectures, 0) = 0 THEN 0
+//                 ELSE ROUND((COALESCE(progress_stats.completed_lectures, 0)::numeric * 100) / progress_stats.total_lectures)
+//             END AS percent
+//          FROM users u
+//          JOIN enrollments e ON u.id = e.student_id
+//          JOIN courses c ON e.course_id = c.id
+//          LEFT JOIN LATERAL (
+//             SELECT
+//                 COUNT(sl.id) AS total_lectures,
+//                 COUNT(*) FILTER (WHERE p.completed = true) AS completed_lectures
+//             FROM section_lectures sl
+//             LEFT JOIN progress p
+//                 ON p.lecture_id = sl.id
+//                AND p.student_id = e.student_id
+//             WHERE sl.course_id = c.id
+//          ) progress_stats ON true
+//          WHERE c.id = $1
+//          ORDER BY e.enrolled_at DESC
+//          LIMIT $2 OFFSET $3`,
+//         [courseId, limit, offset]
+//     );
 export const getCourseStudents = (client, courseId, limit, offset) =>
     client.query(
         `SELECT
@@ -59,20 +95,20 @@ export const getCourseStudents = (client, courseId, limit, offset) =>
          JOIN courses c ON e.course_id = c.id
          LEFT JOIN LATERAL (
             SELECT
-                COUNT(sl.id) AS total_lectures,
-                COUNT(*) FILTER (WHERE p.completed = true) AS completed_lectures
-            FROM section_lectures sl
+                COUNT(l.id) AS total_lectures,
+                -- Updated to map to the new 'is_completed' and 'user_id' columns in the progress table
+                COUNT(p.id) FILTER (WHERE p.is_completed = true) AS completed_lectures
+            FROM lectures l
             LEFT JOIN progress p
-                ON p.lecture_id = sl.id
-               AND p.student_id = e.student_id
-            WHERE sl.course_id = c.id
+                ON p.lecture_id = l.id
+               AND p.user_id = u.id 
+            WHERE l.course_id = c.id
          ) progress_stats ON true
          WHERE c.id = $1
          ORDER BY e.enrolled_at DESC
          LIMIT $2 OFFSET $3`,
         [courseId, limit, offset]
     );
-
 export const getTeacherStudents = (client, teacherId, limit, offset) =>
     client.query(
         `SELECT

@@ -8,6 +8,14 @@ export const findModulesByCourseId = (client, courseId) =>
         [courseId]
     );
 
+export const findModuleById = (client, moduleId) =>
+    client.query(
+        `SELECT id, course_id, title, position, created_at
+         FROM modules
+         WHERE id = $1`,
+        [moduleId]
+    );
+
 export const insertModule = (client, courseId, title, position) =>
     client.query(
         `INSERT INTO modules (course_id, title, position) 
@@ -25,17 +33,49 @@ export const updateModuleById = (client, moduleId, title, position) =>
         [title, position, moduleId]
     );
 
-export const deleteModuleById = (client, moduleId) =>
-    client.query(
-        `DELETE FROM modules WHERE id = $1`,
-        [moduleId]
-    );
+export const reorderModulesInDb = async (client, courseId, moduleId, oldPosition, newPosition) => {
+    // 1. Move target out of the way to position -1 (prevents UNIQUE constraint error)
+    await client.query(`UPDATE modules SET position = -1 WHERE id = $1`, [moduleId]);
 
-export const updateModulePosition = (client, moduleId, newPosition) =>
-    client.query(
-        `UPDATE modules 
-         SET position = $1 
-         WHERE id = $2 
-         RETURNING *`,
+    // 2. Shift the other modules to make room
+    if (newPosition < oldPosition) {
+        // Dragging UP (e.g., 4 -> 2). Shift 2 & 3 down by adding 1.
+        await client.query(
+            `UPDATE modules 
+             SET position = position + 1 
+             WHERE course_id = $1 AND position >= $2 AND position < $3`,
+            [courseId, newPosition, oldPosition]
+        );
+    } else {
+        // Dragging DOWN (e.g., 2 -> 4). Shift 3 & 4 up by subtracting 1.
+        await client.query(
+            `UPDATE modules 
+             SET position = position - 1 
+             WHERE course_id = $1 AND position > $2 AND position <= $3`,
+            [courseId, oldPosition, newPosition]
+        );
+    }
+
+    // 3. Drop the target module into its new home
+    const { rows } = await client.query(
+        `UPDATE modules SET position = $1 WHERE id = $2 RETURNING *`,
         [newPosition, moduleId]
     );
+
+    return rows[0];
+};
+
+// Replaces the old deleteModuleById to handle shifting
+export const deleteModuleAndShift = async (client, courseId, moduleId, deletedPosition) => {
+    // 1. Delete the target module
+    await client.query(`DELETE FROM modules WHERE id = $1`, [moduleId]);
+
+    // 2. Shift everything below it UP by 1 to close the gap
+    // If we delete position 2, then position 3 becomes 2, position 4 becomes 3.
+    await client.query(
+        `UPDATE modules 
+         SET position = position - 1 
+         WHERE course_id = $1 AND position > $2`,
+        [courseId, deletedPosition]
+    );
+};

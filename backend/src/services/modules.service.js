@@ -1,0 +1,157 @@
+import {ApiError} from '../utils/ApiError.js';
+import { pool } from '../db/pool.js';
+import {
+    findModulesByCourseId,
+    insertModule,
+    updateModuleById,
+    deleteModuleAndShift,
+    reorderModulesInDb,
+    findModuleById
+} from '../repositories/modules.repository.js';
+import {z} from 'zod';
+
+// creating a validation schema then classes for modules
+
+const moduleSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    position: z.number().int().min(1, "Position must be a positive integer")
+});
+
+class ModulesService {
+
+    async getModulesByCourseId(courseId) {
+        const client = await pool.connect();
+
+        try {
+            const { rows: modules } = await findModulesByCourseId(client, courseId);
+            return modules;
+
+        } catch(error) {
+            throw new ApiError(500, "Failed to retrieve modules");
+        }
+
+        finally {
+            client.release();
+        }
+    }
+
+    async createModule(courseId, title, position) {
+        const parsed = moduleSchema.safeParse({ title, position });
+
+        if (!parsed.success) {
+            throw new ApiError(400, "Invalid module data", { errors: parsed.error.errors });
+        }
+
+
+        const client = await pool.connect();
+
+        try {
+            const safeData=parsed.data;
+            const {rows} = await insertModule(client, courseId, safeData.title, safeData.position);
+            return rows[0];
+
+        } catch(error) {
+            throw new ApiError(500, "Failed to create module");
+        }
+
+        finally {
+            client.release();
+        }
+
+    }
+
+    async updateModule(moduleId, title, position) {
+        const parsed = moduleSchema.safeParse({ title, position });
+        if (!parsed.success) {
+            throw new ApiError(400, "Invalid module data", { errors: parsed.error.errors });
+        }
+        const client = await pool.connect();
+        try {
+            const safeData=parsed.data;
+            const { rows } = await updateModuleById(client, moduleId, safeData.title, safeData.position);
+            if (rows.length === 0) {
+                throw new ApiError(404, "Module not found");
+            }
+            return rows[0];
+        } catch (error) {
+            throw new ApiError(500, "Failed to update module");
+        } finally {
+            client.release();
+        }
+    }
+
+    async deleteModule(moduleId) {
+        const client = await pool.connect();
+        try {
+            // 1. Get the course_id and position of the module to be deleted
+            const {rows} = await findModuleById(client, moduleId);
+           const course_id = rows[0]?.course_id;
+              const deletedPosition = rows[0]?.position;
+            if (!course_id || !deletedPosition) {
+                throw new ApiError(404, "Module not found");
+            }
+
+            await deleteModuleAndShift(client, course_id, moduleId, deletedPosition);
+            return { message: "Module deleted successfully" };
+        } catch (error) {
+            throw new ApiError(500, "Failed to delete module");
+        } finally {
+            client.release();
+        }   
+    }
+
+    // The most difficult one - updating module position
+
+async updateModulePosition(moduleId, newPosition) {
+    if (!Number.isInteger(newPosition) || newPosition < 1) {
+        throw new ApiError(400, "Position must be a positive integer");
+    }
+
+    const client = await pool.connect();
+    
+    try {
+        // 1. Find the module first so we know its current position and course
+        const { rows } = await findModuleById(client, moduleId);
+        if (rows.length === 0) {
+            throw new ApiError(404, "Module not found");
+        }
+        
+        const moduleToMove = rows[0];
+        const oldPosition = moduleToMove.position;
+        const courseId = moduleToMove.course_id;
+
+        // If it's already in the correct spot, do nothing and return it
+        if (oldPosition === newPosition) {
+            return moduleToMove;
+        }
+
+        // 2. Start the Database Transaction
+        await client.query('BEGIN');
+
+        // 3. Execute the complex reordering logic
+        const updatedModule = await reorderModulesInDb(
+            client, 
+            courseId, 
+            moduleId, 
+            oldPosition, 
+            newPosition
+        );
+
+        // 4. Save everything permanently
+        await client.query('COMMIT');
+
+        return updatedModule;
+
+    } catch (error) {
+        // If anything fails (e.g. database crashes mid-update), undo everything
+        await client.query('ROLLBACK');
+        console.error("Failed to reorder modules:", error);
+        throw new ApiError(500, "Failed to update module position");
+    } finally {
+        client.release();
+    }
+}
+
+}
+
+export const moduleService = new ModulesService();
