@@ -62,7 +62,7 @@ class LectureService {
             throw new ApiError(400, "Validation failed", parsed.error.issues);
         }
 
-        let { courseId, moduleId, title, position, isPreview, videoUrl, durationSec } = parsed.data;
+        let { courseId, moduleId, title, isPreview, videoUrl, durationSec } = parsed.data;
 
         // --- Video Upload Logic ---
         // If a file was uploaded via Multer, send it to Cloudinary
@@ -79,7 +79,7 @@ class LectureService {
         const client = await pool.connect();
         try {
             const { rows } = await insertLecture(
-                client, moduleId, courseId, title, videoUrl, position, durationSec, isPreview
+                client, moduleId, courseId, title, videoUrl, durationSec, isPreview
             );
             return rows[0];
         } catch (error) {

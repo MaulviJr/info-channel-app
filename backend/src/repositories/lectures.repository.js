@@ -14,12 +14,17 @@ export const findLectureById = (client, lectureId) =>
         [lectureId]
     );
 
-export const insertLecture = (client, moduleId, courseId, title, videoUrl, position, durationSec, isPreview) =>
+export const insertLecture = (client, moduleId, courseId, title, videoUrl, durationSec, isPreview) =>
     client.query(
         `INSERT INTO lectures (module_id, course_id, title, video_url, position, duration_sec, is_preview) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) 
+         VALUES ($1,
+          $2, 
+          $3, 
+          $4, 
+          COALESCE((SELECT MAX(position) + 1 FROM lectures WHERE module_id = $1), 1), 
+          $6, $7) 
          RETURNING *`,
-        [moduleId, courseId, title, videoUrl, position, durationSec, isPreview]
+        [moduleId, courseId, title, videoUrl, durationSec, isPreview]
     );
 
 // Fixed: Removed 'position' from this query. 

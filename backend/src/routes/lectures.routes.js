@@ -7,14 +7,14 @@ import {
     deleteLecture
 } from '../controllers/lectures.controller.js';
 import { Router } from 'express';
-
+import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
-router.get('/module/:moduleId', getLecturesForModule);
-router.get('/:lectureId', getLecture);
-router.post('/module/:moduleId', createLecture);
-router.put('/:lectureId', updateLecture);
-router.put('/:lectureId/reorder', reorderLecture);
-router.delete('/:lectureId', deleteLecture);
+// have to set lecture so that only the name of the lecture and all modules are visible but they are locked only student can play the lecture
+router.route('/module/:moduleId').get(getLecturesForModule); 
+router.route('/:lectureId').get(getLecture);
+router.route('/module/:moduleId/create').post(verifyJWT, requireRole('teacher', 'admin'), createLecture);
+router.route('/:lectureId').put(verifyJWT, requireRole('teacher'), updateLecture).delete(verifyJWT, requireRole('admin'), deleteLecture);
+router.route('/reorder').put(verifyJWT, requireRole('teacher', 'admin'), reorderLecture);
 
 export default router;

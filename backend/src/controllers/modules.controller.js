@@ -11,13 +11,18 @@ const getModulesByCourseId = asyncHandler(async (req, res) => {
     
 });
 
+// backend/src/controllers/module.controller.js
+
 const createModule = asyncHandler(async (req, res) => {
-    const {courseId} = req.params;
-    const {title, position} = req.body;
+    const { courseId } = req.params;
+    // Ignore position even if a malicious frontend tries to send it
+    const { title } = req.body; 
 
-    const newModule = await moduleService.createModule(courseId, title, position);
+    const newModule = await moduleService.createModule(courseId, title);
 
-    return res.status(201).json(new ApiResponse(201, { module: newModule }, "Module created successfully"));
+    return res.status(201).json(
+        new ApiResponse(201, { module: newModule }, "Module created successfully")
+    );
 });
 
 const updateModule = asyncHandler(async (req, res) => {

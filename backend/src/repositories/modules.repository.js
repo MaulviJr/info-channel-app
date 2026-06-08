@@ -16,14 +16,19 @@ export const findModuleById = (client, moduleId) =>
         [moduleId]
     );
 
-export const insertModule = (client, courseId, title, position) =>
+// backend/src/repositories/module.repository.js
+
+export const insertModule = (client, courseId, title) =>
     client.query(
         `INSERT INTO modules (course_id, title, position) 
-         VALUES ($1, $2, $3) 
-         RETURNING *`, // Using * returns all columns cleanly
-        [courseId, title, position]
+         VALUES (
+            $1, 
+            $2, 
+            COALESCE((SELECT MAX(position) + 1 FROM modules WHERE course_id = $1), 1)
+         ) 
+         RETURNING *`,
+        [courseId, title]
     );
-
 export const updateModuleById = (client, moduleId, title, position) =>
     client.query(
         `UPDATE modules 

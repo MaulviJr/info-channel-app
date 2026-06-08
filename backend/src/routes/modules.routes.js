@@ -6,14 +6,13 @@ import {
     reorderModules
 } from '../controllers/modules.controller.js';
 import { Router } from 'express';
-
+import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router();
 
+router.route('/course/:courseId').get(getModulesByCourseId);
+router.route('/course/:courseId/create').post(verifyJWT, requireRole('teacher', 'admin'), createModule);
+router.route('/:moduleId').put(verifyJWT, requireRole('teacher'), updateModule).delete(verifyJWT, requireRole('admin'), deleteModule);
+router.route('/reorder').put(verifyJWT, requireRole('teacher', 'admin'), reorderModules);
 
-router.get('/course/:courseId', getModulesByCourseId);
-router.post('/course/:courseId', createModule);
-router.put('/:moduleId', updateModule);
-router.delete('/:moduleId', deleteModule);
-router.put('/:moduleId/reorder', reorderModules);
 
 export default router;

@@ -35,31 +35,32 @@ class ModulesService {
         }
     }
 
-    async createModule(courseId, title, position) {
-        const parsed = moduleSchema.safeParse({ title, position });
+// backend/src/services/module.service.js
 
-        if (!parsed.success) {
-            throw new ApiError(400, "Invalid module data", { errors: parsed.error.errors });
-        }
+async createModule(courseId, title) {
+    // Only validate the fields the frontend is allowed to send
+    const parsed = moduleSchema.safeParse({ title });
 
-
-        const client = await pool.connect();
-
-        try {
-            const safeData=parsed.data;
-            const {rows} = await insertModule(client, courseId, safeData.title, safeData.position);
-            return rows[0];
-
-        } catch(error) {
-            throw new ApiError(500, "Failed to create module");
-        }
-
-        finally {
-            client.release();
-        }
-
+    if (!parsed.success) {
+        throw new ApiError(400, "Invalid module data", { errors: parsed.error.errors });
     }
 
+    const client = await pool.connect();
+
+    try {
+        const safeData = parsed.data;
+        // Pass only courseId and title to the repository
+        const { rows } = await insertModule(client, courseId, safeData.title);
+        return rows[0];
+
+    } catch (error) {
+        // Log the actual error internally for debugging, but throw a clean ApiError
+        console.error("Error creating module:", error);
+        throw new ApiError(500, "Failed to create module");
+    } finally {
+        client.release();
+    }
+}
     async updateModule(moduleId, title, position) {
         const parsed = moduleSchema.safeParse({ title, position });
         if (!parsed.success) {
