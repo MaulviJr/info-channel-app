@@ -79,3 +79,22 @@ export const deleteLectureAndShift = async (client, moduleId, lectureId, deleted
         [moduleId, deletedPosition]
     );
 };
+
+export const countLecturesByCourse = (client, courseId) =>
+    client.query(
+        `SELECT COUNT(*) AS lecture_count FROM lectures WHERE course_id = $1`,
+        [courseId]
+    );
+
+export const findPreviousLecture = (client, lectureId) => {
+    // This finds the immediate preceding lecture within the SAME module.
+    const query = `
+        SELECT * FROM lectures 
+        WHERE module_id = (SELECT module_id FROM lectures WHERE id = $1)
+          AND position < (SELECT position FROM lectures WHERE id = $1)
+        ORDER BY position DESC
+        LIMIT 1
+    `;
+    
+    return client.query(query, [lectureId]);
+};

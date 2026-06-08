@@ -19,11 +19,18 @@ app.use(express.static("public"));
 import userRouter from './routes/user.routes.js';
 import enrollmentRouter from './routes/enrollment.routes.js';
 import courseRouter from './routes/course.routes.js';
+import moduleRouter from './routes/modules.routes.js';
+import progressRouter from './routes/progress.routes.js';
 
+import lectureRouter from './routes/lectures.routes.js';
 //routes.declaratoin
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/enrollments", enrollmentRouter);
 app.use("/api/v1/courses", courseRouter);
+app.use("/api/v1/modules",moduleRouter );
+app.use("/api/v1/progress", progressRouter);
+app.use("/api/v1/lectures", lectureRouter);
+
 
 // app.get("/health", (req, res) => {
 // 	res.status(200).json({
