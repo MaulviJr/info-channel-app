@@ -21,7 +21,7 @@ const createLectureAPI = async (moduleId, lectureData, videoFile) => {
     const formData = new FormData();
     formData.append('courseId', lectureData.courseId);
     formData.append('title', lectureData.title);
-    formData.append('description', lectureData.description);
+    // formData.append('description', lectureData.description);
     formData.append('video', videoFile);
     const response = await api.post(`/lectures/module/${moduleId}/create`, formData);
     return response;

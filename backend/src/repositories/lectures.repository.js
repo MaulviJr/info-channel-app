@@ -29,13 +29,13 @@ export const insertLecture = (client, moduleId, courseId, title, videoUrl, durat
 
 // Fixed: Removed 'position' from this query. 
 // This query should ONLY be used when editing the text/video content of a lecture.
-export const updateLectureById = (client, lectureId, title, videoUrl, durationSec, isPreview) =>
+export const updateLectureById = (client, lectureId, title, durationSec, isPreview) =>
     client.query(
         `UPDATE lectures 
-         SET title = $1, video_url = $2, duration_sec = $3, is_preview = $4 
-         WHERE id = $5 
+         SET title = $1, duration_sec = $2, is_preview = $3 
+         WHERE id = $4 
          RETURNING *`,
-        [title, videoUrl, durationSec, isPreview, lectureId]
+        [title, durationSec, isPreview, lectureId]
     );
 
 // NEW: The transaction-safe Drag-and-Drop reorder function (scoped to module_id)

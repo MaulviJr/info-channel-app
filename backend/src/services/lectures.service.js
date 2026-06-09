@@ -121,7 +121,6 @@ class LectureService {
                 client,
                 lectureId,
                 parsed.data.title ?? existing.title,
-                videoUrl,
                 durationSec,
                 parsed.data.isPreview ?? existing.is_preview
             );
