@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ApiError } from "../utils/ApiError.js";
-import pool from "../db/pool.js";
+import {pool} from "../db/pool.js";
 // Assuming you have an upload helper like this in your cloudinary.js
 import { uploadVideo } from "../utils/cloudinary.js"; 
 import {
@@ -24,7 +24,7 @@ const lectureBaseSchema = z.object({
 const createLectureSchema = lectureBaseSchema.extend({
     courseId: z.string().uuid("Invalid course ID"),
     moduleId: z.string().uuid("Invalid module ID"),
-    position: z.coerce.number().int().min(1, "Position must be a positive integer"),
+    // position: z.coerce.number().int().min(1, "Position must be a positive integer"),
 });
 
 const updateLectureSchema = lectureBaseSchema.partial();
@@ -57,12 +57,13 @@ class LectureService {
     }
 
     async createLecture(data, localFilePath = null) {
+        console.log('Creating lecture with data:', data, 'and local file path:', localFilePath);
         const parsed = createLectureSchema.safeParse(data);
         if (!parsed.success) {
             throw new ApiError(400, "Validation failed", parsed.error.issues);
         }
 
-        let { courseId, moduleId, title, isPreview, videoUrl, durationSec } = parsed.data;
+        let { courseId, title, moduleId, isPreview, videoUrl, durationSec } = parsed.data;
 
         // --- Video Upload Logic ---
         // If a file was uploaded via Multer, send it to Cloudinary
@@ -78,6 +79,7 @@ class LectureService {
 
         const client = await pool.connect();
         try {
+            console.log('Inserting lecture into DB with title:', title, 'courseId:', courseId, 'moduleId:', moduleId, 'videoUrl:', videoUrl, 'durationSec:', durationSec, 'isPreview:', isPreview);
             const { rows } = await insertLecture(
                 client, moduleId, courseId, title, videoUrl, durationSec, isPreview
             );
@@ -86,7 +88,8 @@ class LectureService {
             if (error.code === '23505') {
                 throw new ApiError(400, "A lecture already exists at this position in this module.");
             }
-            throw new ApiError(500, "Failed to create lecture");
+            // throw new ApiError(500, "Failed to create lecture");
+            throw new ApiError(500, `Database error: ${error.message}`);
         } finally {
             client.release();
         }

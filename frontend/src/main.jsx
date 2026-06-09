@@ -32,8 +32,8 @@ import TeacherProfilePage from './pages/teacher/TeacherProfilePage.jsx';
 import TeacherCreateCourse from './pages/teacher/TeacherCreateCourse.jsx';
 import TeacherStudents from './pages/teacher/TeacherStudents.jsx';
 import TeacherCourses from './pages/teacher/TeacherCourses.jsx';
-
-
+import TeacherCourseModules from './pages/teacher/TeacherCourseModules.jsx';
+import TeacherCreateModule from './pages/teacher/TeacherCreateModule.jsx';
 const router = createBrowserRouter([
   {
     path: '/',
@@ -108,7 +108,9 @@ const router = createBrowserRouter([
            { path: 'courses/new', element: <TeacherCreateCourse /> },
            { path: 'my-students', element: <TeacherStudents /> },
            { path: 'courses', element: <TeacherCourses /> },
+           { path: 'courses/modules/:id', element: <TeacherCourseModules /> },
           { path: 'profile', element: <TeacherProfilePage /> },
+           { path: 'courses/modules/:id/new', element: <TeacherCreateModule /> },
         ],
       },
     ],

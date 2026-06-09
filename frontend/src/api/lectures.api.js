@@ -19,10 +19,39 @@ const getLectureAPI = async (lectureId) => {
 
 const createLectureAPI = async (moduleId, lectureData, videoFile) => {
     const formData = new FormData();
-    formData.append('courseId', lectureData.courseId);
-    formData.append('title', lectureData.title);
+    // console.log('Creating lecture with data:', lectureData.get('title'), 'courseId:', lectureData.get('courseId'), 'moduleId:', moduleId, 'videoFile:', videoFile);
+
+
+    formData.append('courseId', lectureData.get('courseId'));
+    formData.append('title', lectureData.get('title'));
+    formData.append('moduleId', moduleId);
     // formData.append('description', lectureData.description);
     formData.append('video', videoFile);
     const response = await api.post(`/lectures/module/${moduleId}/create`, formData);
+    // console.log('Create Lecture Response:', response);
     return response;
+}
+
+const updateLectureAPI = async (lectureId, title, position) => {
+    const response = await api.put(`/lectures/${lectureId}`, { title, position });
+    return response;
+}
+
+const deleteLectureAPI = async (lectureId) => {
+    const response = await api.delete(`/lectures/${lectureId}`);
+    return response;
+}
+
+const reorderLectureAPI = async (lectureId, newPosition) => {
+    const response = await api.put(`/lectures/reorder`, { lectureId, newPosition });
+    return response;
+}
+
+export {
+    getLecturesForModuleAPI,
+    getLectureAPI,
+    createLectureAPI,
+    updateLectureAPI,
+    deleteLectureAPI,
+    reorderLectureAPI
 }

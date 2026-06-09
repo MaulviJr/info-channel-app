@@ -42,4 +42,10 @@ export const deleteEnrollmentById = (client, enrollmentId) =>
         [enrollmentId]
     );
 
-
+export const findActiveEnrollment = (client, studentId, courseId) =>
+    client.query(
+        `SELECT id, student_id, course_id, status, enrolled_at
+         FROM enrollments
+         WHERE student_id = $1 AND course_id = $2 AND status = 'active'`,
+        [studentId, courseId]
+    );

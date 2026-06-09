@@ -126,14 +126,21 @@ const TeacherCourses = () => {
                     <span>Monthly: {formatFee(course.monthly_fee)}</span>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-2">
+{/* I want buttons as a stack */}
+                <div className="flex flex-col gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate(`/teacher/courses/${course.id}`)}
                   >
                     View Students
+                  </Button>
+                   <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => navigate(`/teacher/courses/modules/${course.id}`)}
+                  >
+                    Open Modules
                   </Button>
                 </div>
               </div>

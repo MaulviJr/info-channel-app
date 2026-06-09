@@ -17,12 +17,15 @@ export const findLectureById = (client, lectureId) =>
 export const insertLecture = (client, moduleId, courseId, title, videoUrl, durationSec, isPreview) =>
     client.query(
         `INSERT INTO lectures (module_id, course_id, title, video_url, position, duration_sec, is_preview) 
-         VALUES ($1,
+         VALUES (
+          $1, 
           $2, 
           $3, 
           $4, 
           COALESCE((SELECT MAX(position) + 1 FROM lectures WHERE module_id = $1), 1), 
-          $6, $7) 
+          $5, 
+          $6
+         ) 
          RETURNING *`,
         [moduleId, courseId, title, videoUrl, durationSec, isPreview]
     );

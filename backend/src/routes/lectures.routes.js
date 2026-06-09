@@ -8,7 +8,7 @@ import {
 } from '../controllers/lectures.controller.js';
 import { Router } from 'express';
 import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
-import upload from '../middlewares/multer.middleware.js';
+import {upload} from '../middlewares/multer.middleware.js';
 const router = Router();
 
 // have to set lecture so that only the name of the lecture and all modules are visible but they are locked only student can play the lecture

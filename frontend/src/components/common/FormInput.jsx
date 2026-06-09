@@ -5,6 +5,7 @@ function FormInput({
   autoComplete,
   registerProps,
   error,
+  ...props
 }) {
   return (
     <div>
@@ -14,6 +15,7 @@ function FormInput({
         type={type}
         autoComplete={autoComplete}
         {...registerProps}
+        {...props}
         className="mt-2 w-full rounded-lg border border-border bg-background px-4 py-2 text-sm"
       />
       {error ? (

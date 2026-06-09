@@ -7,7 +7,7 @@ import {
 } from '../repositories/progress.repository.js';
 import { findLectureById, findPreviousLecture, countLecturesByCourse } from '../repositories/lectures.repository.js';
 import { findActiveEnrollment, updateEnrollmentStatus } from '../repositories/enrollment.repository.js';
-import { issueCertificate } from '../repositories/certificate.repository.js';
+// import { issueCertificate } from '../repositories/certificate.repository.js';
 
 // Validation schemas moved from controller
 const completeLectureSchema = z.object({
@@ -75,12 +75,12 @@ const completeLecture = async (client, userId, rawLectureId) => {
     if (progress.percent === 100) {
         await updateEnrollmentStatus(client, userId, courseId, 'completed');
 
-        const certificate = await issueCertificate(client, userId, courseId);
+        // const certificate = await issueCertificate(client, userId, courseId);
 
         return {
             completed:       true,
             courseCompleted: true,
-            certificateId:   certificate.rows[0].id,
+            certificateId:   certificate.rows[0].id || null,
             progress,
         };
     }
