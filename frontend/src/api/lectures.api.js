@@ -33,6 +33,7 @@ const createLectureAPI = async (moduleId, lectureData, videoFile) => {
 }
 
 const updateLectureAPI = async (lectureId, title, position) => {
+    console.log(`API call to update lecture ${lectureId} with title "${title}" and position ${position}`);
     const response = await api.put(`/lectures/${lectureId}`, { title, position });
     return response;
 }

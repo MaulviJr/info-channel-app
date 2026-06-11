@@ -79,7 +79,7 @@ class LectureService {
 
         const client = await pool.connect();
         try {
-            console.log('Inserting lecture into DB with title:', title, 'courseId:', courseId, 'moduleId:', moduleId, 'videoUrl:', videoUrl, 'durationSec:', durationSec, 'isPreview:', isPreview);
+          
             const { rows } = await insertLecture(
                 client, moduleId, courseId, title, videoUrl, durationSec, isPreview
             );
@@ -104,6 +104,7 @@ class LectureService {
         const client = await pool.connect();
         try {
             // 1. Get existing lecture to fall back on current values if not provided
+            console.log(`Updating lecture ${lectureId} with data:`, data, 'and local file path:', localFilePath);
             const { rows: existingRows } = await findLectureById(client, lectureId);
             if (existingRows.length === 0) throw new ApiError(404, "Lecture not found");
             const existing = existingRows[0];

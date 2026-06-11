@@ -17,6 +17,7 @@ const createModuleAPI = async (courseId, title) => {
 }
 
 const updateModuleAPI = async (moduleId, title, position) => {
+    console.log(`API call to update module ${moduleId} with title "${title}" and position ${position}`);
     const response = await api.put(`/modules/${moduleId}`, { title, position });
     return response;
 }
@@ -26,8 +27,9 @@ const deleteModuleAPI = async (moduleId) => {
     return response;
 }
 
-const reorderModulesAPI = async (moduleId, newPosition) => {
-    const response = await api.put(`/modules/reorder`, { moduleId, newPosition });
+const reorderModulesAPI = async (moduleId,courseId, newPosition) => {
+     console.log(`API call to update module ${courseId} with new position ${newPosition}`);
+    const response = await api.put(`/modules/${courseId}/reorder`, { moduleId, newPosition });
     return response;
 }
 

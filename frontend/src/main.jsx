@@ -108,7 +108,7 @@ const router = createBrowserRouter([
            { path: 'courses/new', element: <TeacherCreateCourse /> },
            { path: 'my-students', element: <TeacherStudents /> },
            { path: 'courses', element: <TeacherCourses /> },
-           { path: 'courses/modules/:id', element: <TeacherCourseModules /> },
+           { path: 'courses/modules/:id/*', element: <TeacherCourseModules /> },
           { path: 'profile', element: <TeacherProfilePage /> },
            { path: 'courses/modules/:id/new', element: <TeacherCreateModule /> },
         ],

@@ -62,19 +62,22 @@ async createModule(courseId, title) {
     }
 }
     async updateModule(moduleId, title, position) {
-        const parsed = moduleSchema.safeParse({ title, position });
+        
+        const parsed = moduleSchema.safeParse({ title });
         if (!parsed.success) {
             throw new ApiError(400, "Invalid module data", { errors: parsed.error.errors });
         }
         const client = await pool.connect();
         try {
             const safeData=parsed.data;
-            const { rows } = await updateModuleById(client, moduleId, safeData.title, safeData.position);
+            
+            const { rows } = await updateModuleById(client, moduleId, safeData.title, position);
             if (rows.length === 0) {
                 throw new ApiError(404, "Module not found");
             }
             return rows[0];
         } catch (error) {
+            console.error("Error updating module:", error);
             throw new ApiError(500, "Failed to update module");
         } finally {
             client.release();
@@ -95,7 +98,9 @@ async createModule(courseId, title) {
             await deleteModuleAndShift(client, course_id, moduleId, deletedPosition);
             return { message: "Module deleted successfully" };
         } catch (error) {
+            console.error("Error deleting module:", error);
             throw new ApiError(500, "Failed to delete module");
+
         } finally {
             client.release();
         }   
@@ -107,7 +112,7 @@ async updateModulePosition(moduleId, newPosition) {
     if (!Number.isInteger(newPosition) || newPosition < 1) {
         throw new ApiError(400, "Position must be a positive integer");
     }
-
+        console.log(`Attempting to move module ${moduleId} to position ${newPosition}`);
     const client = await pool.connect();
     
     try {
@@ -128,7 +133,7 @@ async updateModulePosition(moduleId, newPosition) {
 
         // 2. Start the Database Transaction
         await client.query('BEGIN');
-
+        console.log(courseId, moduleId, oldPosition, newPosition);
         // 3. Execute the complex reordering logic
         const updatedModule = await reorderModulesInDb(
             client, 
@@ -147,7 +152,7 @@ async updateModulePosition(moduleId, newPosition) {
         // If anything fails (e.g. database crashes mid-update), undo everything
         await client.query('ROLLBACK');
         console.error("Failed to reorder modules:", error);
-        throw new ApiError(500, "Failed to update module position");
+        throw new ApiError(500, "Failed to update module position", error.message);
     } finally {
         client.release();
     }

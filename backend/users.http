@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:5000/api/v1
-@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImVtYWlsIjoiYWRtaW5AaW5mb2NoYW5uZWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc5MjUyOTg5LCJleHAiOjE3NzkyNTM4ODl9.qSqLLEkfozzUn0-JjOyfTxfRVwiIGTYBkuIksT5EM1U
+@accessToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImY5NzEwYmJjLTYyZDYtNDhhYS1iYmE5LWQzOTI5ZmYwZGI5ZCIsImVtYWlsIjoic3R1ZGVudDFAZXhhbXBsZS5jb20iLCJyb2xlIjoic3R1ZGVudCIsImlhdCI6MTc4MTE0NDc5OSwiZXhwIjoxNzgxMTQ1Njk5fQ.Z2mL9UcqENARpXT1GGZoiP2FHJFASe0DyXN4fWRBlSw
 @refreshToken =eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUxMDM2MTcwLWIxZGQtNGU0Mi1hNjQ3LThiNDg0MWU3MTQ5YSIsImlhdCI6MTc3ODY1MDg2MCwiZXhwIjoxNzc5MjU1NjYwfQ.WO9D6xqZB75jmMkYtjMTWAq7Xn6-ag4z5DqXRVyMwWE
 
 @USER_ID = 36c22a6e-99f7-4ae5-92c0-67c2c0bb6646
@@ -18,8 +18,8 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-  "email": "admin@infochannel.com",
-  "password": "admin123"
+  "email": "student1@example.com",
+  "password": "password123"
 }
 
 ### Refresh tokens

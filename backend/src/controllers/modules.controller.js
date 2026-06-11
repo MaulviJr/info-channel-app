@@ -28,7 +28,9 @@ const createModule = asyncHandler(async (req, res) => {
 const updateModule = asyncHandler(async (req, res) => {
     const {moduleId} = req.params;
     const {title, position} = req.body;
+    // console.log("Received request to reorder module with data:", req.body);
 
+    //  console.log(`Module ID from params: ${moduleId}`);
     const updatedModule = await moduleService.updateModule(moduleId, title, position);
 
     return res.status(200).json(new ApiResponse(200, { module: updatedModule }, "Module updated successfully"));
@@ -36,15 +38,17 @@ const updateModule = asyncHandler(async (req, res) => {
 
 const deleteModule = asyncHandler(async (req, res) => {
     const {moduleId} = req.params;
-
+    console.log(`Received request to delete module with ID: ${moduleId}`);
     await moduleService.deleteModule(moduleId);
 
     return res.status(200).json(new ApiResponse(200, null, "Module deleted successfully"));
 });
 
 const reorderModules = asyncHandler(async (req, res) => {
-    const {moduleId} = req.params;
-    const {newPosition} = req.body;
+
+    console.log("Received request to reorder module with data:", req.body);
+    const {moduleId,newPosition} = req.body;
+    console.log(`Module ID from body: ${moduleId}, New Position: ${newPosition}`);
 
     const reorderedModule = await moduleService.updateModulePosition(moduleId, newPosition);
 

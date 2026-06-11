@@ -15,7 +15,7 @@ const router = Router();
 router.route('/module/:moduleId').get(getLecturesForModule); 
 router.route('/:lectureId').get(getLecture);
 router.route('/module/:moduleId/create').post(verifyJWT, requireRole('teacher', 'admin'), upload.single('video'), createLecture);
-router.route('/:lectureId').put(verifyJWT, requireRole('teacher'), updateLecture).delete(verifyJWT, requireRole('admin'), deleteLecture);
+router.route('/:lectureId').put(verifyJWT, requireRole('teacher'), updateLecture).delete(verifyJWT, requireRole('admin', 'teacher'), deleteLecture);
 router.route('/reorder').put(verifyJWT, requireRole('teacher', 'admin'), reorderLecture);
 
 export default router;

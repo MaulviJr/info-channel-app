@@ -40,9 +40,9 @@ const createLecture = asyncHandler(async (req, res) => {
 // Body: { title, isPreview, durationSec } (all optional)
 // File: new video file (optional)
 const updateLecture = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    
-    const lecture = await lectureService.updateLectureDetails(id, req.body, req.file?.path);
+    const { lectureId } = req.params;
+    // console.log(req.params);
+    const lecture = await lectureService.updateLectureDetails(lectureId, req.body, req.file?.path);
     
     return res.status(200).json(
         new ApiResponse(200, { lecture }, "Lecture updated successfully")
@@ -52,10 +52,10 @@ const updateLecture = asyncHandler(async (req, res) => {
 // PATCH /api/v1/lectures/:id/reorder
 // Body: { newPosition }
 const reorderLecture = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const { lectureId } = req.params;
     const { newPosition } = req.body;
     
-    const updatedLecture = await lectureService.updateLecturePosition(id, newPosition);
+    const updatedLecture = await lectureService.updateLecturePosition(lectureId, newPosition);
     
     return res.status(200).json(
         new ApiResponse(200, { lecture: updatedLecture }, "Lecture position updated")
@@ -64,9 +64,9 @@ const reorderLecture = asyncHandler(async (req, res) => {
 
 // DELETE /api/v1/lectures/:id
 const deleteLecture = asyncHandler(async (req, res) => {
-    const { id } = req.params;
+    const { lectureId } = req.params;
     
-    await lectureService.deleteLecture(id);
+    await lectureService.deleteLecture(lectureId);
     
     return res.status(200).json(
         new ApiResponse(200, null, "Lecture deleted successfully")
