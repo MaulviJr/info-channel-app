@@ -116,15 +116,25 @@ export const reorderModulesInDb = async (client, courseId, moduleId, oldPosition
     return rows[0];
 };
 export const deleteModuleAndShift = async (client, courseId, moduleId, deletedPosition) => {
-    // 1. Delete the target module
+    // 1. Delete the target module completely
     await client.query(`DELETE FROM modules WHERE id = $1`, [moduleId]);
 
-    // 2. Shift everything below it UP by 1 to close the gap
-    // If we delete position 2, then position 3 becomes 2, position 4 becomes 3.
+    // 2. Shift the remaining modules into a deep negative temporary space
+    // This avoids the row-by-row UNIQUE constraint collisions
+    const OFFSET = 10000;
+
     await client.query(
         `UPDATE modules 
-         SET position = position - 1 
-         WHERE course_id = $1 AND position > $2`,
-        [courseId, deletedPosition]
+         SET position = position - 1 - $1 
+         WHERE course_id = $2 AND position > $3`,
+        [OFFSET, courseId, deletedPosition]
+    );
+
+    // 3. Restore the shifted modules from the negative space back to their final positive positions
+    await client.query(
+        `UPDATE modules 
+         SET position = position + $1 
+         WHERE course_id = $2 AND position < 0`,
+        [OFFSET, courseId]
     );
 };

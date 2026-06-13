@@ -84,26 +84,38 @@ async createModule(courseId, title) {
         }
     }
 
-    async deleteModule(moduleId) {
+   async deleteModule(moduleId) {
         const client = await pool.connect();
         try {
+            // Start SQL transaction
+            await client.query('BEGIN');
+
             // 1. Get the course_id and position of the module to be deleted
-            const {rows} = await findModuleById(client, moduleId);
-           const course_id = rows[0]?.course_id;
-              const deletedPosition = rows[0]?.position;
+            const { rows } = await findModuleById(client, moduleId);
+            const course_id = rows[0]?.course_id;
+            const deletedPosition = rows[0]?.position;
+
             if (!course_id || !deletedPosition) {
                 throw new ApiError(404, "Module not found");
             }
 
+            // 2. Delete and safely shift adjacent modules
             await deleteModuleAndShift(client, course_id, moduleId, deletedPosition);
+
+            // Commit the transaction to save changes
+            await client.query('COMMIT');
+            
             return { message: "Module deleted successfully" };
         } catch (error) {
+            // If anything fails, rollback the deletion so we don't leave gaps in the database
+            await client.query('ROLLBACK');
+            
             console.error("Error deleting module:", error);
+            if (error instanceof ApiError) throw error;
             throw new ApiError(500, "Failed to delete module");
-
         } finally {
             client.release();
-        }   
+        }
     }
 
     // The most difficult one - updating module position
