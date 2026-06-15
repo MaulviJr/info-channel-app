@@ -41,31 +41,42 @@ export const updateLectureById = (client, lectureId, title, durationSec, isPrevi
         [title, durationSec, isPreview, lectureId]
     );
 
-// NEW: The transaction-safe Drag-and-Drop reorder function (scoped to module_id)
 export const reorderLecturesInDb = async (client, moduleId, lectureId, oldPosition, newPosition) => {
-    // 1. Move out of the way
+    // 1. Move target out of the way to position -1 (prevents UNIQUE constraint error)
     await client.query(`UPDATE lectures SET position = -1 WHERE id = $1`, [lectureId]);
 
-    // 2. Shift others inside the same module
+    // 2. Shift the other lectures into a deep negative temporary space
+    // This entirely avoids Postgres's row-by-row UNIQUE constraint collisions
+    const OFFSET = 10000;
+
     if (newPosition < oldPosition) {
-        // Dragging UP
+        // Dragging UP (e.g., 5 -> 3). Shift 3 & 4 down by adding 1, but offset deeply.
         await client.query(
             `UPDATE lectures 
-             SET position = position + 1 
-             WHERE module_id = $1 AND position >= $2 AND position < $3`,
-            [moduleId, newPosition, oldPosition]
+             SET position = position + 1 - $1 
+             WHERE module_id = $2 AND position >= $3 AND position < $4`,
+            [OFFSET, moduleId, newPosition, oldPosition]
         );
     } else {
-        // Dragging DOWN
+        // Dragging DOWN (e.g., 2 -> 4). Shift 3 & 4 up by subtracting 1, but offset deeply.
         await client.query(
             `UPDATE lectures 
-             SET position = position - 1 
-             WHERE module_id = $1 AND position > $2 AND position <= $3`,
-            [moduleId, oldPosition, newPosition]
+             SET position = position - 1 - $1 
+             WHERE module_id = $2 AND position > $3 AND position <= $4`,
+            [OFFSET, moduleId, oldPosition, newPosition]
         );
     }
 
-    // 3. Drop into new home
+    // 3. Restore the shifted lectures from the negative space back to their final positions
+    // We target `< -1` so we don't accidentally touch our target lecture sitting at `-1`
+    await client.query(
+        `UPDATE lectures 
+         SET position = position + $1 
+         WHERE module_id = $2 AND position < -1`,
+        [OFFSET, moduleId]
+    );
+
+    // 4. Drop the target lecture into its new home
     const { rows } = await client.query(
         `UPDATE lectures SET position = $1 WHERE id = $2 RETURNING *`,
         [newPosition, lectureId]
@@ -74,17 +85,27 @@ export const reorderLecturesInDb = async (client, moduleId, lectureId, oldPositi
     return rows[0];
 };
 
-// NEW: Replaces deleteLectureById to automatically close gaps in the module
+// NEW: Replaces deleteLectureById to automatically close gaps in the module safely
 export const deleteLectureAndShift = async (client, moduleId, lectureId, deletedPosition) => {
-    // 1. Delete the lecture
+    // 1. Delete the lecture completely
     await client.query(`DELETE FROM lectures WHERE id = $1`, [lectureId]);
 
-    // 2. Shift everything below it UP by 1 to close the gap in this specific module
+    // 2. Shift everything below it UP by 1 to close the gap, using negative space
+    const OFFSET = 10000;
+
     await client.query(
         `UPDATE lectures 
-         SET position = position - 1 
-         WHERE module_id = $1 AND position > $2`,
-        [moduleId, deletedPosition]
+         SET position = position - 1 - $1 
+         WHERE module_id = $2 AND position > $3`,
+        [OFFSET, moduleId, deletedPosition]
+    );
+
+    // 3. Restore the shifted lectures from the negative space back to their final positive positions
+    await client.query(
+        `UPDATE lectures 
+         SET position = position + $1 
+         WHERE module_id = $2 AND position < 0`,
+        [OFFSET, moduleId]
     );
 };
 

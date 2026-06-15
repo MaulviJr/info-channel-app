@@ -44,15 +44,29 @@ const deleteModule = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, null, "Module deleted successfully"));
 });
 
-const reorderModules = asyncHandler(async (req, res) => {
+// const reorderModules = asyncHandler(async (req, res) => {
 
-    console.log("Received request to reorder module with data:", req.body);
-    const {moduleId,newPosition} = req.body;
-    console.log(`Module ID from body: ${moduleId}, New Position: ${newPosition}`);
+//     console.log("Received request to reorder module with data:", req.body);
+//     const {moduleId,newPosition} = req.body;
+//     console.log(`Module ID from body: ${moduleId}, New Position: ${newPosition}`);
 
-    const reorderedModule = await moduleService.updateModulePosition(moduleId, newPosition);
+//     const reorderedModule = await 
 
-    return res.status(200).json(new ApiResponse(200, { module: reorderedModule }, "Modules reordered successfully"));
+//     return res.status(200).json(new ApiResponse(200, { module: reorderedModule }, "Modules reordered successfully"));
+// });
+
+const reorderModules= asyncHandler(async (req, res) => {
+    
+    const { moduleId,newPosition } = req.body;
+    const { courseId } = req.params;
+    await moduleService.updateModulePosition(moduleId, newPosition);;
+
+    // Return full list instead of single module
+    const modules = await moduleService.getModulesByCourseId(courseId);
+
+    return res.status(200).json(
+        new ApiResponse(200, { modules }, 'Modules reordered successfully')
+    );
 });
 
 export {

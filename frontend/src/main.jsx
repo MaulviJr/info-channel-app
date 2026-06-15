@@ -121,7 +121,16 @@ const router = createBrowserRouter([
   },
 ]);
 
-const queryClient = new QueryClient();
+// const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 30_000,           // data stays fresh for 30 seconds
+            refetchOnWindowFocus: false, // don't refetch when user clicks browser
+            retry: 1,                    // only retry failed requests once
+        },
+    },
+});
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

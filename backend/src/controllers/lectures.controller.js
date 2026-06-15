@@ -40,6 +40,7 @@ const createLecture = asyncHandler(async (req, res) => {
 // Body: { title, isPreview, durationSec } (all optional)
 // File: new video file (optional)
 const updateLecture = asyncHandler(async (req, res) => {
+     console.log('Received reorder request with body in update:', req.body);
     const { lectureId } = req.params;
     // console.log(req.params);
     const lecture = await lectureService.updateLectureDetails(lectureId, req.body, req.file?.path);
@@ -51,17 +52,30 @@ const updateLecture = asyncHandler(async (req, res) => {
 
 // PATCH /api/v1/lectures/:id/reorder
 // Body: { newPosition }
+// const reorderLecture = asyncHandler(async (req, res) => {
+//     console.log('Received reorder request with body in reorder:', req.body);
+//     const { lectureId,newPosition } = req.body;
+//     // const {  } = req.body;
+    
+//     const updatedLecture = await lectureService.updateLecturePosition(lectureId, newPosition);
+    
+//     return res.status(200).json(
+//         new ApiResponse(200, { lecture: updatedLecture }, "Lecture position updated")
+//     );
+// });
 const reorderLecture = asyncHandler(async (req, res) => {
-    const { lectureId } = req.params;
-    const { newPosition } = req.body;
-    
-    const updatedLecture = await lectureService.updateLecturePosition(lectureId, newPosition);
-    
+    const { lectureId, newPosition } = req.body;
+
+    const lecture = await lectureService.updateLecturePosition(lectureId, newPosition);
+    const moduleId = lecture.module_id;
+
+    // Return full list of lectures for this module
+    const lectures = await lectureService.getLecturesByModule(moduleId);
+
     return res.status(200).json(
-        new ApiResponse(200, { lecture: updatedLecture }, "Lecture position updated")
+        new ApiResponse(200, { lectures, moduleId }, 'Lecture position updated')
     );
 });
-
 // DELETE /api/v1/lectures/:id
 const deleteLecture = asyncHandler(async (req, res) => {
     const { lectureId } = req.params;

@@ -44,6 +44,7 @@ const deleteLectureAPI = async (lectureId) => {
 }
 
 const reorderLectureAPI = async (lectureId, newPosition) => {
+    console.log(`API call to reorder lecture ${lectureId} to new position ${newPosition}`);
     const response = await api.put(`/lectures/reorder`, { lectureId, newPosition });
     return response;
 }
