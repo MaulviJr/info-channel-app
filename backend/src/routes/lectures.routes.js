@@ -24,7 +24,7 @@ router.route('/module/:moduleId')
   .get(getLecturesForModule);
 
 router.route('/module/:moduleId/create')
-  .post(verifyJWT, requireRole('teacher', 'admin'), upload.single('video'), createLecture);
+  .post(verifyJWT, requireRole('teacher', 'admin'), createLecture);
 
 // ==========================================
 // 3. DYNAMIC / WILDCARD ROUTES (Must come last)

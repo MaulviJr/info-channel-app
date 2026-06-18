@@ -313,6 +313,22 @@ const deleteCourse = asyncHandler(async (req, res) => {
     );
 });
 
+const findCourseWithModulesAndLectures = asyncHandler(async (req, res) => {
+    const  courseId  = req.params.id;
+    console.log(req.params)
+    console.log(req.body)
+    console.log(`Received request for course details with ID: ${courseId}`);
+    const courseDetails = await courseService.getCourseWithModulesAndLecture(courseId);
+    
+    return res.status(200).json(
+        new ApiResponse(200, { course: courseDetails }, "Course details fetched successfully")
+    );
+
+
+
+
+});
+
 const toggleCoursePublish = asyncHandler(async (req, res) => {
     const { id } = req.params;
     
@@ -330,6 +346,7 @@ export {
     createACourse,
     updateCourse,
     deleteCourse,
-    toggleCoursePublish
+    toggleCoursePublish,
+    findCourseWithModulesAndLectures
 };
 

@@ -17,23 +17,23 @@ const getLectureAPI = async (lectureId) => {
     return response;
 }
 
-const createLectureAPI = async (moduleId, lectureData, videoFile) => {
-    const formData = new FormData();
-    // console.log('Creating lecture with data:', lectureData.get('title'), 'courseId:', lectureData.get('courseId'), 'moduleId:', moduleId, 'videoFile:', videoFile);
+// ... existing imports
 
-
-    formData.append('courseId', lectureData.get('courseId'));
-    formData.append('title', lectureData.get('title'));
-    formData.append('moduleId', moduleId);
-    // formData.append('description', lectureData.description);
-    formData.append('video', videoFile);
-    const response = await api.post(`/lectures/module/${moduleId}/create`, formData);
-    // console.log('Create Lecture Response:', response);
+const createLectureAPI = async (moduleId, lectureData) => {
+    // lectureData now contains { courseId, title, videoUrl }
+    const payload = {
+        ...lectureData,
+        moduleId
+    };
+    
+    // Send standard JSON payload
+    const response = await api.post(`/lectures/module/${moduleId}/create`, payload);
     return response;
 }
 
+// ... rest of the file stays the same
 const updateLectureAPI = async (lectureId, title, position) => {
-    console.log(`API call to update lecture ${lectureId} with title "${title}" and position ${position}`);
+    // console.log(`API call to update lecture ${lectureId} with title "${title}" and position ${position}`);
     const response = await api.put(`/lectures/${lectureId}`, { title, position });
     return response;
 }
@@ -44,7 +44,7 @@ const deleteLectureAPI = async (lectureId) => {
 }
 
 const reorderLectureAPI = async (lectureId, newPosition) => {
-    console.log(`API call to reorder lecture ${lectureId} to new position ${newPosition}`);
+    // console.log(`API call to reorder lecture ${lectureId} to new position ${newPosition}`);
     const response = await api.put(`/lectures/reorder`, { lectureId, newPosition });
     return response;
 }

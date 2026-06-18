@@ -13,6 +13,7 @@ import CoursesPage from './pages/public/CoursesPage.jsx';
 import CourseDetailPage from './pages/public/CourseDetailPage.jsx';
 import StudentDashboard from './pages/student/StudentDashboard.jsx';
 import StudentCourse from './pages/student/StudentCourse.jsx';
+import StudentLearn from './pages/student/StudentLearn.jsx';
 import StudentProfile from './pages/student/StudentProfile.jsx';
 import EnrollmentConfirmationPage from './pages/student/EnrollmentConfirmationPage.jsx';
 import StudentEnrollmentsPage from './pages/student/StudentEnrollmentsPage.jsx';
@@ -66,10 +67,11 @@ const router = createBrowserRouter([
           { path: 'profile', element: <StudentProfile /> },
           { path: 'courses', element: <StudentCourse />,
             // children:[ {
-            //   path: 'browse', element: <CoursesPage />
-            // }
-            // ]
-           },
+              //   path: 'browse', element: <CoursesPage />
+              // }
+              // ]
+            },
+            {path: 'courses/:id', element: <StudentLearn />},
            {path: 'courses/browse', element: <CoursesPage />},
           { path: 'enrollments', element: <StudentEnrollmentsPage /> },
           { path: 'enrollments/:id', element: <EnrollmentConfirmationPage /> },
@@ -133,11 +135,11 @@ const queryClient = new QueryClient({
 });
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  // <StrictMode>
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
     </AuthProvider>
-  </StrictMode>
+  // </StrictMode>
 );

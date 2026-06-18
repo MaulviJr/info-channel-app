@@ -50,7 +50,7 @@ function StudentCourseCard({ enrollment }) {
       disabled={!courseId}
       onClick={() => {
         if (courseId) {
-          navigate(`/courses/${courseId}`);
+          navigate(`/student/courses/${courseId}`);
         }
       }}
       className="bg-card rounded-xl border border-border overflow-hidden text-left transition hover:border-primary/40 hover:shadow-sm disabled:opacity-60"

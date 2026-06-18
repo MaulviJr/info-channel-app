@@ -4,19 +4,17 @@ import { X } from 'lucide-react';
 import FormInput from '../common/FormInput';
 import LoadingButton from '../common/LoadingButton';
 import ErrorAlert from '../common/ErrorAlert';
-// Assume this API exists. Adjust path if necessary.
-import {createLectureAPI} from '../../api/lectures.api';
+import { createLectureAPI } from '../../api/lectures.api';
 
 const AddLectureModal = ({ isOpen, onClose, moduleId, courseId }) => {
   const queryClient = useQueryClient();
   const [title, setTitle] = useState('');
-  const [videoFile, setVideoFile] = useState(null);
+  const [videoUrl, setVideoUrl] = useState(''); // Changed to empty string
   const [localError, setLocalError] = useState('');
 
   const { mutate: uploadLecture, isPending, isError, error } = useMutation({
-    mutationFn: (formData) => createLectureAPI(moduleId, formData,videoFile),
+    mutationFn: (lectureData) => createLectureAPI(moduleId, lectureData), // Simplified
     onSuccess: () => {
-      // Invalidate the specific module's lectures to trigger a refetch
       queryClient.invalidateQueries({ queryKey: ['lectures', moduleId] });
       handleClose();
     },
@@ -26,24 +24,22 @@ const AddLectureModal = ({ isOpen, onClose, moduleId, courseId }) => {
     e.preventDefault();
     setLocalError('');
 
-    if (!title.trim() || !videoFile) {
-      setLocalError('Please provide both a title and a video file.');
+    if (!title.trim() || !videoUrl.trim()) {
+      setLocalError('Please provide both a title and a video URL.');
       return;
     }
 
-    // Using FormData for file uploads
-    const formData = new FormData();
-    formData.append('courseId', courseId);
-    // formData.append('moduleId', moduleId);
-    formData.append('title', title);
-    // formData.append('video', videoFile);
-    // console.log('Submitting lecture with title:', formData.get('title'), 'and video file:', formData.get('video'), formData);
-    uploadLecture(formData);
+    // Send a plain JSON object instead of FormData
+    uploadLecture({
+      courseId,
+      title: title.trim(),
+      videoUrl: videoUrl.trim()
+    });
   };
 
   const handleClose = () => {
     setTitle('');
-    setVideoFile(null);
+    setVideoUrl('');
     setLocalError('');
     onClose();
   };
@@ -62,7 +58,7 @@ const AddLectureModal = ({ isOpen, onClose, moduleId, courseId }) => {
 
         {(isError || localError) && (
           <div className="mb-4">
-            <ErrorAlert message={localError || error?.response?.data?.message || 'Failed to upload lecture'} />
+            <ErrorAlert message={localError || error?.response?.data?.message || 'Failed to add lecture'} />
           </div>
         )}
 
@@ -77,17 +73,16 @@ const AddLectureModal = ({ isOpen, onClose, moduleId, courseId }) => {
             required
           />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Video File</label>
-            <input
-              type="file"
-              accept="video/*"
-              onChange={(e) => setVideoFile(e.target.files[0])}
-              className="w-full rounded-md border border-gray-300 p-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              required
-            />
-            {videoFile && <p className="mt-1 text-xs text-gray-500">Selected: {videoFile.name}</p>}
-          </div>
+          {/* Changed from File Input to Text/URL Input */}
+          <FormInput
+            label="Video URL"
+            name="videoUrl"
+            type="url"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="e.g., https://youtube.com/... or https://vimeo.com/..."
+            required
+          />
 
           <div className="mt-6 flex justify-end space-x-3">
             <button
@@ -98,13 +93,12 @@ const AddLectureModal = ({ isOpen, onClose, moduleId, courseId }) => {
             >
               Cancel
             </button>
-           <LoadingButton
-//   type="submit"
-  isLoading={isPending}
-  idleText="Upload Lecture"
-  loadingText="Uploading..."
-  className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-/>
+            <LoadingButton
+              isLoading={isPending}
+              idleText="Add Lecture"
+              loadingText="Saving..."
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            />
           </div>
         </form>
       </div>

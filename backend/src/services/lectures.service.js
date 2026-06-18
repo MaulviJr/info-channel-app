@@ -56,46 +56,35 @@ class LectureService {
         }
     }
 
-    async createLecture(data, localFilePath = null) {
-        console.log('Creating lecture with data:', data, 'and local file path:', localFilePath);
-        const parsed = createLectureSchema.safeParse(data);
-        if (!parsed.success) {
-            throw new ApiError(400, "Validation failed", parsed.error.issues);
-        }
-
-        let { courseId, title, moduleId, isPreview, videoUrl, durationSec } = parsed.data;
-
-        // --- Video Upload Logic ---
-        // If a file was uploaded via Multer, send it to Cloudinary
-        if (localFilePath) {
-            const uploadResult = await uploadVideo(localFilePath);
-            if (!uploadResult) {
-                throw new ApiError(500, "Failed to upload video to Cloudinary");
-            }
-            videoUrl = uploadResult.secure_url;
-            // Cloudinary returns duration in seconds as a float, we round it to an integer
-            durationSec = Math.round(uploadResult.duration || 0); 
-        }
-
-        const client = await pool.connect();
-        try {
-          
-            const { rows } = await insertLecture(
-                client, moduleId, courseId, title, videoUrl, durationSec, isPreview
-            );
-            return rows[0];
-        } catch (error) {
-            if (error.code === '23505') {
-                throw new ApiError(400, "A lecture already exists at this position in this module.");
-            }
-            // throw new ApiError(500, "Failed to create lecture");
-            throw new ApiError(500, `Database error: ${error.message}`);
-        } finally {
-            client.release();
-        }
+    async createLecture(data) {
+    console.log('Creating lecture with data:', data);
+    
+    // Make sure your createLectureSchema (Zod/Joi) is updated to accept videoUrl as a string
+    const parsed = createLectureSchema.safeParse(data);
+    if (!parsed.success) {
+        throw new ApiError(400, "Validation failed", parsed.error.issues);
     }
 
-    async updateLectureDetails(lectureId, data, localFilePath = null) {
+    // Default durationSec to 0 if not provided, since we can't fetch it from Cloudinary anymore
+    let { courseId, title, moduleId, isPreview = false, videoUrl, durationSec = 0 } = parsed.data;
+
+    const client = await pool.connect();
+    try {
+        const { rows } = await insertLecture(
+            client, moduleId, courseId, title, videoUrl, durationSec, isPreview
+        );
+        return rows[0];
+    } catch (error) {
+        if (error.code === '23505') {
+            throw new ApiError(400, "A lecture already exists at this position in this module.");
+        }
+        throw new ApiError(500, `Database error: ${error.message}`);
+    } finally {
+        client.release();
+    }
+}
+
+    async updateLectureDetails(lectureId, data) {
         const parsed = updateLectureSchema.safeParse(data);
         if (!parsed.success) {
             throw new ApiError(400, "Validation failed", parsed.error.issues);
@@ -104,7 +93,7 @@ class LectureService {
         const client = await pool.connect();
         try {
             // 1. Get existing lecture to fall back on current values if not provided
-            console.log(`Updating lecture ${lectureId} with data:`, data, 'and local file path:', localFilePath);
+            console.log(`Updating lecture ${lectureId} with data:`, data);
             const { rows: existingRows } = await findLectureById(client, lectureId);
             if (existingRows.length === 0) throw new ApiError(404, "Lecture not found");
             const existing = existingRows[0];
@@ -113,12 +102,12 @@ class LectureService {
             let durationSec = parsed.data.durationSec ?? existing.duration_sec;
 
             // 2. Handle new video upload
-            if (localFilePath) {
-                const uploadResult = await uploadVideo(localFilePath);
-                if (!uploadResult) throw new ApiError(500, "Failed to upload new video");
-                videoUrl = uploadResult.secure_url;
-                durationSec = Math.round(uploadResult.duration || 0);
-            }
+            // if (localFilePath) {
+            //     const uploadResult = await uploadVideo(localFilePath);
+            //     if (!uploadResult) throw new ApiError(500, "Failed to upload new video");
+            //     videoUrl = uploadResult.secure_url;
+            //     durationSec = Math.round(uploadResult.duration || 0);
+            // }
 
             // 3. Perform Update
             const { rows } = await updateLectureById(

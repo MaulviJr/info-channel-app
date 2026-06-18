@@ -41,6 +41,12 @@ const toggleCoursePublishAPI = async (courseId) => {
     return response;
 };
 
+const getCourseWithModulesAndLecturesAPI = async (courseId) => {
+    console.log(`API call to get course details for course ID: ${courseId}`);
+    const response = await api.get(`/courses/${courseId}/details`);
+    return response;
+}
+
 export {
     listCoursesAPI,
     listAllCoursesForStaffAPI,
@@ -49,5 +55,6 @@ export {
     createCourseAPI,
     updateCourseAPI,
     deleteCourseAPI,
-    toggleCoursePublishAPI
+    toggleCoursePublishAPI,
+    getCourseWithModulesAndLecturesAPI
 }

@@ -8,7 +8,8 @@ import {
     createCourse as createCourseInRepo,
     updateCourse as updateCourseInRepo,
     deleteCourse as deleteCourseInRepo,
-    findAllCourses
+    findAllCourses,
+    getCourseWithModulesAndLectures
 } from "../repositories/course.repository.js";
 
 // --- Validation Schemas ---
@@ -142,6 +143,20 @@ class CourseService {
             }
 
             await deleteCourseInRepo(client, id);
+        } finally {
+            client.release();
+        }
+    }
+
+    async getCourseWithModulesAndLecture(courseId) {
+        const client = await pool.connect();
+        try {
+            console.log(`Fetching course with modules and lectures for course ID: ${courseId}`);
+            const { rows } = await getCourseWithModulesAndLectures(client, courseId);
+            if (rows.length === 0) {
+                throw new ApiError(404, "Course not found");
+            }
+            return rows[0]; // This should include modules and lectures based on the repository implementation
         } finally {
             client.release();
         }

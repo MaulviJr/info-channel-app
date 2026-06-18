@@ -7,17 +7,20 @@ import {
 	updateCourse,
 	deleteCourse,
 	toggleCoursePublish,
+	findCourseWithModulesAndLectures
 } from "../controllers/course.controller.js";
 import { requireRole, verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 // Public
+router.route("/:id/details").get(findCourseWithModulesAndLectures);
 router.route("/").get(listCourses);
 router
 	.route("/all")
 	.get(verifyJWT, requireRole("teacher", "admin"), listAllCoursesForStaff);
 router.route("/:id").get(getCourseById);
+
 
 // Teacher/Admin
 router.route("/create-course").post(

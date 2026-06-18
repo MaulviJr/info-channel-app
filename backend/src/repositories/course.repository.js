@@ -36,6 +36,54 @@ export const findCoursesByInstructorId = (client, instructorId, limit, offset) =
         [instructorId, limit, offset]
     );
 
+export const getCourseWithModulesAndLectures = (client, courseId) =>
+  client.query(
+    `SELECT 
+        c.id AS course_id,
+        c.title AS course_title,
+        c.description AS course_description,
+        c.admission_fee,
+        c.monthly_fee,
+        c.board_registration,
+        c.thumbnail_url,
+        u.name AS instructor_name,
+        COALESCE(
+            json_agg(
+                json_build_object(
+                    'module_id', m.id,
+                    'module_title', m.title,
+                    'position', m.position,
+                    'lectures', m.lectures
+                ) ORDER BY m.position ASC
+            ) FILTER (WHERE m.id IS NOT NULL), '[]'
+        ) AS modules
+     FROM courses c
+     LEFT JOIN users u ON c.instructor_id = u.id -- ADD: Join users to get instructor name
+     LEFT JOIN (
+         SELECT 
+             mod.id,
+             mod.course_id,
+             mod.title,
+             mod.position,
+             COALESCE(
+                 json_agg(
+                     json_build_object(
+                         'lecture_id', lec.id,
+                         'lecture_title', lec.title,
+                         'lecture_duration', lec.duration_sec,
+                         'position', lec.position
+                     ) ORDER BY lec.position ASC
+                 ) FILTER (WHERE lec.id IS NOT NULL), '[]'
+             ) AS lectures
+         FROM modules mod
+         LEFT JOIN lectures lec ON mod.id = lec.module_id
+         GROUP BY mod.id
+     ) m ON c.id = m.course_id
+     WHERE c.id = $1
+     GROUP BY c.id, u.name;`,
+    [courseId]
+  );
+
 // export const getCourseStudents = (client, courseId, limit, offset) =>
 //     client.query(
 //         `SELECT
