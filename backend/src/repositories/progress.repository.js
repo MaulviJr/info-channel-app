@@ -1,10 +1,15 @@
-export const upsertProgress = (client, userId, lectureId, courseId) =>
+// backend/src/repositories/progress.repository.js
+export const upsertProgress = (client, userId, courseId, lectureId, isCompleted) =>
     client.query(
-        `INSERT INTO progress (user_id, lecture_id, course_id, is_completed, completed_at)
-         VALUES ($1, $2, $3, true, NOW())
+        `INSERT INTO progress (user_id, course_id, lecture_id, is_completed, completed_at)
+         VALUES ($1, $2, $3, $4, CASE WHEN $4::boolean THEN NOW() ELSE NULL END)
          ON CONFLICT (user_id, lecture_id)
-         DO UPDATE SET is_completed = true, completed_at = NOW(), updated_at = NOW()`,
-        [userId, lectureId, courseId]
+         DO UPDATE SET 
+            is_completed = EXCLUDED.is_completed, 
+            completed_at = EXCLUDED.completed_at, 
+            updated_at = NOW()
+         RETURNING *`,
+        [userId, courseId, lectureId, isCompleted]
     );
 
 export const findProgressByCourse = (client, userId, courseId) =>

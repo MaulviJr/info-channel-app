@@ -38,6 +38,8 @@ function CourseProgressCard({ enrollment }) {
   const courseTitle = course.title || 'Untitled course';
   const progressPercent = Math.round(progress.percent || 0);
 
+  console.log("Rendering CourseProgressCard with enrollment:", enrollment);
+
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden">
       <div className="relative h-36">
@@ -86,7 +88,7 @@ function CourseProgressCard({ enrollment }) {
           <div className="mt-auto pt-2">
             <Button
               fullWidth
-              onClick={() => navigate(`/courses/${enrollment.course_id}/learn`)}
+              onClick={() => navigate(`/student/courses/${enrollment.course_id}`)}
             >
               Continue Learning
             </Button>

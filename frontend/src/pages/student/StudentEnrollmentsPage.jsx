@@ -132,7 +132,7 @@ const StudentEnrollmentsPage = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() =>
-                            navigate(`/courses/${enrollment.course_id}`)
+                            navigate(`/student/courses/${enrollment.course_id}`)
                           }
                         >
                           Open course

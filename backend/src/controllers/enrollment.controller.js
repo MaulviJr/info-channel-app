@@ -180,13 +180,14 @@ const getEnrollmentHandler = asyncHandler(async (req, res) => {
 
 const getMyEnrollmentsHandler = asyncHandler(async (req, res) => {
     // console.log("I am here in getMyEnrollmentsHandler for user:", req.user);
-    const query = `
+  const query = `
         SELECT 
             e.id,
             e.course_id,
             e.status,
             e.enrolled_at,
             json_build_object(
+                'id', c.id,
                 'title', c.title,
                 'description', c.description,
                 'thumbnail_url', c.thumbnail_url,
@@ -195,13 +196,33 @@ const getMyEnrollmentsHandler = asyncHandler(async (req, res) => {
                 'instructor', json_build_object('name', u.name)
             ) AS course,
             json_build_object(
-                'completedLectures', 0,
-                'totalLectures', 0,
-                'percent', 0
+                'completedLectures', COALESCE(cp.completed_count, 0)::int,
+                'totalLectures', COALESCE(tl.total_count, 0)::int,
+                'percent', CASE 
+                    WHEN COALESCE(tl.total_count, 0) > 0 
+                    THEN ROUND((COALESCE(cp.completed_count, 0)::numeric / tl.total_count) * 100)::int 
+                    ELSE 0 
+                END
             ) AS progress
         FROM enrollments e
         JOIN courses c ON e.course_id = c.id
         JOIN users u ON c.instructor_id = u.id
+        
+        -- 1. Subquery to count TOTAL lectures in the course
+        LEFT JOIN (
+            SELECT course_id, COUNT(*) as total_count 
+            FROM lectures 
+            GROUP BY course_id
+        ) tl ON tl.course_id = c.id
+        
+        -- 2. Subquery to count COMPLETED lectures for this specific student
+        LEFT JOIN (
+            SELECT course_id, COUNT(*) as completed_count 
+            FROM progress 
+            WHERE user_id = $1 AND is_completed = true 
+            GROUP BY course_id
+        ) cp ON cp.course_id = c.id
+        
         WHERE e.student_id = $1
         ORDER BY e.enrolled_at DESC
     `;

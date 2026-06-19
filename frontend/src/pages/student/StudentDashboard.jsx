@@ -22,17 +22,18 @@ function StudentDashboard() {
     queryFn: getMyEnrollmentsAPI, // Use the new function here
   });
 
+
   // Safely extract data accounting for Axios and the backend ApiResponse structure
   const profilePayload = profileQuery.data?.data?.data || profileQuery.data?.data || {};
-  console.log('Profile status response:', profileQuery.data);
+  // console.log('Profile status response:', profileQuery.data);
   const isComplete = profilePayload.isComplete ?? true;
   const missingFields = profilePayload.missingFields || [];
 
   // Assuming backend returns { data: { enrollments: [...] } } or an array directly
   const rawEnrollments = enrollmentsQuery.data?.data?.data?.enrollments || enrollmentsQuery.data?.data?.data || [];
-  console.log('Enrollments response:', enrollmentsQuery.data);
+  // console.log('Enrollments response:', enrollmentsQuery.data);
   const enrollments = Array.isArray(rawEnrollments) ? rawEnrollments : [];
-
+  console.log('Parsed enrollments:', enrollments);
   const enrolledCount = enrollments.filter(
     (enrollment) => enrollment.status === 'active' || enrollment.status === 'pending_payment'
   ).length;

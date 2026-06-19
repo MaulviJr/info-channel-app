@@ -42,16 +42,16 @@ const updateEnrollmentStatusAPI = async (enrollmentId, payload) => {
  * @param {string} enrollmentId
  */
 const getEnrollmentByIdAPI = async (enrollmentId) => {
-	console.log('Fetching enrollment details for ID:', enrollmentId);
+	// console.log('Fetching enrollment details for ID:', enrollmentId);
 	const response = await api.get(`/enrollments/${enrollmentId}`);
-	console.log('Enrollment details:', response);
+	// console.log('Enrollment details:', response);
 	return response;
 };
 
 const getMyEnrollmentsAPI = async () => {
-	console.log('Fetching my enrollments');
+	// console.log('Fetching my enrollments');
 	const response = await api.get('/enrollments/my');
-	console.log('My enrollments:', response.data.data);
+	console.log('My enrollments from getMyEnrollmentsAPI:', response.data.data);
 	return response;
 };
 
