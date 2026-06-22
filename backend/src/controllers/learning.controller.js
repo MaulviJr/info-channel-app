@@ -5,9 +5,9 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { pool } from "../db/pool.js";
 import { upsertProgress } from "../repositories/progress.repository.js";
 import {getCourseForLearning} from "../repositories/learning.repository.js";
-import { verifyEnrollment } from "../repositories/enrollment.repository.js";
-
-
+import { verifyEnrollment,updateEnrollmentStatus,getEnrollmentId } from "../repositories/enrollment.repository.js";
+import {countCompletedLectures} from "../repositories/progress.repository.js";
+import { findLecturesByCourseId } from "../repositories/lectures.repository.js";
 // --- VALIDATION SCHEMAS ---
 const progressSchema = z.object({
   courseId: z.string().uuid(),
@@ -40,7 +40,7 @@ export const getLearningCourseHandler = asyncHandler(async (req, res) => {
 });
 
 export const updateProgressHandler = asyncHandler(async (req, res) => {
-    console.log("Received progress update request with body:", req.body);
+    // console.log("Received progress update request with body:", req.body);
   const parsed = progressSchema.safeParse(req.body);
   if (!parsed.success) {
     throw new ApiError(400, "Validation failed", parsed.error.issues);
@@ -57,9 +57,31 @@ export const updateProgressHandler = asyncHandler(async (req, res) => {
     }
 
     const result = await upsertProgress(client, userId, courseId, lectureId, isCompleted);
+    const completedLectures = await countCompletedLectures(client, userId, courseId);
+   // if countCompletedLectures is equal to total lectures in course then update enrollment status to completed
+    const courseResult = await findLecturesByCourseId(client, courseId);
+    const totalLectures = courseResult.rowCount;
+    console.log("Completed Lectures:", Number(completedLectures.rows[0].completed_count), "Total Lectures:", totalLectures);
+    if ( Number(completedLectures.rows[0].completed_count) === totalLectures) {
+    
+       const enrollmentId = await getEnrollmentId(client, userId, courseId);
+       const enrollmentResult = await updateEnrollmentStatus(client, enrollmentId.rows[0].id, "completed");
+       return res.status(200).json(
+      new ApiResponse(200, { progress: result.rows[0], enrollmentStatus: "completed" }, "Progress updated and course marked as completed")
+    );
+       
+    }
+    // else check if the enrolment is completed then remark it as active if the user is marking any lecture as incomplete
+    else if (isCompleted === false) {
+      const enrollmentId = await getEnrollmentId(client, userId, courseId);
+      const enrollmentResult = await updateEnrollmentStatus(client, enrollmentId.rows[0].id, "active");
+      return res.status(200).json(
+      new ApiResponse(200, { progress: result.rows[0], enrollmentStatus: "active" }, "Progress updated and course marked as active")
+    );
+    }
 
     return res.status(200).json(
-      new ApiResponse(200, { progress: result.rows[0] }, "Progress updated successfully")
+      new ApiResponse(200, { progress: result.rows[0], }, "Progress updated successfully")
     );
   } finally {
     client.release();

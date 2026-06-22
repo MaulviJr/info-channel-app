@@ -10,6 +10,13 @@ export const createEnrollment = (client, studentId, courseId) =>
         [studentId, courseId]
     );
 
+// function to get enrolment id for the given student, only id for the purpose of updating the status in learning.controller.js
+export const getEnrollmentId = (client, studentId, courseId) =>
+    client.query(
+        "SELECT id FROM enrollments WHERE student_id = $1 AND course_id = $2",
+        [studentId, courseId]
+     );
+
 export const countActiveEnrollmentsByStudent = async (client, studentId) => {
     const result = await client.query(
         `SELECT COUNT(*) FROM enrollments 
@@ -51,8 +58,9 @@ export const findActiveEnrollment = (client, studentId, courseId) =>
     );
 export const verifyEnrollment = async (client, userId, courseId) => {
   const res = await client.query(
-    `SELECT 1 FROM enrollments WHERE student_id = $1 AND course_id = $2 AND status = 'active'`,
+    `SELECT 1 FROM enrollments WHERE student_id = $1 AND course_id = $2 AND status = 'active' OR status = 'completed'`,
     [userId, courseId]
   );
+ 
   return res.rowCount > 0;
 };

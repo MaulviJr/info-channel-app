@@ -7,6 +7,14 @@ export const findLecturesByModuleId = (client, moduleId) =>
         [moduleId]
     );
 
+export const findLecturesByCourseId = (client, courseId) =>
+    client.query(
+        `SELECT * FROM lectures
+        WHERE course_id = $1
+        ORDER BY position ASC`,
+        [courseId]
+    );
+
 // Fixed: Switched to SELECT * because your previous query forgot to fetch module_id, duration_sec, and is_preview
 export const findLectureById = (client, lectureId) =>
     client.query(

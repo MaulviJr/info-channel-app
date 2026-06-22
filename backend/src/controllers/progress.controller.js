@@ -11,7 +11,7 @@ const completeLectureHandler = asyncHandler(async (req, res) => {
     // Controller now only extracts data, validation happens in the service
     const { lectureId } = req.body;
     const userId = req.user.id;
-
+    console.log("Received progress update request with body:", req.body);
     const client = await pool.connect();
     try {
         await client.query('BEGIN');

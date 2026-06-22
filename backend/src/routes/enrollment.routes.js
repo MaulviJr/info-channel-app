@@ -16,7 +16,7 @@ router.route("/").post(verifyJWT, requireRole("student"), createEnrollmentHandle
 
 router
 	.route("/:id/status")
-	.patch(verifyJWT, requireRole("admin"), changeEnrollmentStatusHandler);
+	.patch(verifyJWT, changeEnrollmentStatusHandler);
 
 // router
 // 	.route("/:id/payment-status")

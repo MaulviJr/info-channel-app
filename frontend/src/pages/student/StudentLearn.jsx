@@ -31,6 +31,10 @@ const StudentLearn = () => {
     },
   });
 
+
+
+
+
   // 3. Process Modules & Apply Strict Sequential Locking Logic
   const { processedModules, activeLectureData } = useMemo(() => {
     if (!course?.modules) return { processedModules: [], activeLectureData: null };
