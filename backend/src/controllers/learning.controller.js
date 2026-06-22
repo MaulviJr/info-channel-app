@@ -61,7 +61,7 @@ export const updateProgressHandler = asyncHandler(async (req, res) => {
    // if countCompletedLectures is equal to total lectures in course then update enrollment status to completed
     const courseResult = await findLecturesByCourseId(client, courseId);
     const totalLectures = courseResult.rowCount;
-    console.log("Completed Lectures:", Number(completedLectures.rows[0].completed_count), "Total Lectures:", totalLectures);
+    
     if ( Number(completedLectures.rows[0].completed_count) === totalLectures) {
     
        const enrollmentId = await getEnrollmentId(client, userId, courseId);
