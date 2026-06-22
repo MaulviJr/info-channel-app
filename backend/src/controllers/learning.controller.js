@@ -21,6 +21,7 @@ export const getLearningCourseHandler = asyncHandler(async (req, res) => {
 
   const client = await pool.connect();
   try {
+    
     const isEnrolled = await verifyEnrollment(client, userId, courseId);
     if (!isEnrolled) {
       throw new ApiError(403, "You do not have an active enrollment for this course.");

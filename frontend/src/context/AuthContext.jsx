@@ -2,7 +2,7 @@ import { createContext, useReducer, useEffect, useCallback, useMemo } from 'reac
 import PropTypes from 'prop-types';
 // We assume auth.api.js exports getMeAPI, loginAPI, and logoutAPI
 import { getMeAPI, loginAPI, logoutAPI } from '../api/auth.api';
-
+import { useQueryClient } from '@tanstack/react-query';
 // 1. Initial State Definition
 const initialState = {
   isAuthenticated: false,
@@ -76,6 +76,7 @@ export const AuthContext = createContext(null);
 // 5. Provider Component
 export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const queryClient = useQueryClient();
 
   // --- Session Rehydration Flow ---
   const initializeSession = useCallback(async () => {
@@ -148,8 +149,9 @@ export function AuthProvider({ children }) {
       console.error("Logout API call encountered an error:", error);
     } finally {
       dispatch({ type: AuthActionTypes.LOGOUT });
+      queryClient.clear();
     }
-  }, []);
+  }, [queryClient]);
 
   /**
    * Allow Axios interceptors to silently inject a freshly rotated access token into Context memory
