@@ -20,16 +20,9 @@
   --accent-foreground: oklch(0.3618 0.0739 89.3466);
   --destructive: oklch(0.5414 0.2017 25.5087);
   --destructive-foreground: oklch(1.0000 0 0);
-  --border: oklch(92.802% 0.01171 277.944); /* was 22.802% (near-black) — fixed to a subtle hairline in line with --muted/--input */
+  --border: oklch(22.802% 0.01171 277.944);
   --input: oklch(0.8962 0.0151 277.8308);
   --ring: oklch(0.3746 0.1509 271.6498);
-  /* Tonal blue for gradients — pairs with --primary without leaving the
-     navy hue family, so "primary → primary-2" gradients stay clean
-     instead of crossing through gold and turning muddy/green. */
-  --primary-2: oklch(0.5580 0.1580 268.0000);
-  /* Low-alpha washes for glows/blobs behind images and cards. */
-  --primary-soft: oklch(0.3746 0.1509 271.6498 / 0.12);
-  --accent-soft: oklch(0.8557 0.1731 87.7371 / 0.16);
 /* Light mode */
 --chart-1: oklch(0.4823 0.1721 264.3);   /* #293890 navy blue */
 --chart-2: oklch(0.8012 0.1732 91.2);    /* #FFCC12 golden yellow */
@@ -86,9 +79,6 @@
   --border: oklch(0.3005 0.0545 276.8233);
   --input: oklch(0.3005 0.0545 276.8233);
   --ring: oklch(0.8557 0.1731 87.7371);
-  --primary-2: oklch(0.7000 0.1550 268.0000);
-  --primary-soft: oklch(0.5199 0.1781 273.6430 / 0.18);
-  --accent-soft: oklch(0.8557 0.1731 87.7371 / 0.14);
 /* Dark mode */
 --chart-1: oklch(0.6234 0.1821 264.3);   /* lighter navy for dark bg */
 --chart-2: oklch(0.8312 0.1732 91.2);    /* #FFCC12 stays vivid */
@@ -132,9 +122,6 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary-2: var(--primary-2);
-  --color-primary-soft: var(--primary-soft);
-  --color-accent-soft: var(--accent-soft);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
