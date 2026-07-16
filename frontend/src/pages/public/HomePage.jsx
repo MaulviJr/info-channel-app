@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import logoUrl from "../../assets/info2.svg";
 import HeroSection from "../../components/home/HeroSection";
 import AboutSection from "../../components/home/AboutSection";
+import CourseSection from "../../components/home/CourseSection";
+import TestimonialsSection from "../../components/home/TestimonialSection"
+import CTASection from "../../components/home/CTASection";
 function Navbar({ scrolled }) {
 	return (
 		<header
@@ -33,8 +36,8 @@ function Navbar({ scrolled }) {
 					{[
 						["Home", "/"],
 						["About", "#about"],
-						["Testimonials", "#testimonials"],
 						["Courses", "/courses"],
+						["Testimonials", "#testimonials"],
 					].map(([label, href]) => (
 						<a
 							key={label}
@@ -81,7 +84,9 @@ export default function HomePage() {
 			<Navbar scrolled={scrolled} />
 			<HeroSection />
 			<AboutSection />
-				
+			<CourseSection />
+			<TestimonialsSection />
+			<CTASection />
 		</div>
 	);
 }
