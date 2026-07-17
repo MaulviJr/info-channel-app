@@ -87,8 +87,8 @@ export default function CTASection({
   subtitle = "Join thousands of students building successful careers with Info Channel.",
   primaryCtaLabel = "Register Now",
   secondaryCtaLabel = "Login",
-  primaryHref = "#register",
-  secondaryHref = "#login",
+  primaryHref = "/signup",
+  secondaryHref = "/login",
   footnote = "Already have an account?",
   footnoteLinkLabel = "Login",
 }) {

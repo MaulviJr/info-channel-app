@@ -36,21 +36,41 @@ import TeacherStudents from './pages/teacher/TeacherStudents.jsx';
 import TeacherCourses from './pages/teacher/TeacherCourses.jsx';
 import TeacherCourseModules from './pages/teacher/TeacherCourseModules.jsx';
 import TeacherCreateModule from './pages/teacher/TeacherCreateModule.jsx';
-
+import HomeLayout from './pages/public/HomeLayout.jsx';
 
 const router = createBrowserRouter([
+
   {
-    path: '/',
-    element: <HomePage />,
+    element: <HomeLayout />,
+    children: [
+      {
+        path: '/',
+        element: <HomePage />,
+      },
+      {
+        path: '/courses',
+        element: <CoursesPage />,
+      },
+      {
+        path: '/courses/:id',
+        element: <CourseDetailPage />,
+      },
+      // Note: If you want the Navbar on the Login/Signup pages too, 
+      // you can move the GuestRoute block inside these children.
+    ],
   },
-  {
-    path: '/courses',
-    element: <CoursesPage />,
-  },
-  {
-    path: '/courses/:id',
-    element: <CourseDetailPage />,
-  },
+  // {
+  //   path: '/',
+  //   element: <HomePage />,
+  // },
+  // {
+  //   path: '/courses',
+  //   element: <CoursesPage />,
+  // },
+  // {
+  //   path: '/courses/:id',
+  //   element: <CourseDetailPage />,
+  // },
   {
     element: <GuestRoute />,
     children: [

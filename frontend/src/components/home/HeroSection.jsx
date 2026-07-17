@@ -81,14 +81,21 @@ export default function HeroSection() {
 				</div>
 			</div>
 
-			<section
+			{/* <section
 				className={`hero-stage relative z-10 mx-auto grid min-h-screen w-full max-w-7xl items-center px-4 pb-16 pt-[calc(${NAV_HEIGHT}px+2rem)] sm:px-6 lg:px-10 lg:pt-[calc(${NAV_HEIGHT}px+3rem)] ${
 					contentVisible ? "hero-stage--visible" : ""
 				} ${reducedMotion ? "hero-stage--reduced" : ""}`}
-			>
+			> */}
+			<section
+    className={`hero-stage relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-4 pb-16 pt-32 sm:px-6 lg:px-10 lg:pt-10 ${
+        contentVisible ? "hero-stage--visible" : ""
+    } ${reducedMotion ? "hero-stage--reduced" : ""}`}
+>
 				<div className="grid items-center gap-14 lg:grid-cols-[minmax(0,1.05fr)_minmax(440px,0.95fr)] lg:gap-10">
 					<div className="order-1 flex flex-col items-start text-left lg:max-w-2xl">
-						<h1 className="hero-title max-w-[12ch] text-balance text-[clamp(3.2rem,7vw,5.5rem)] font-semibold leading-[0.9] tracking-tighter text-(--foreground)">
+						{/* <h1 className="hero-title max-w-[12ch] text-balance text-[clamp(3.2rem,7vw,5.5rem)] font-semibold leading-[0.9] tracking-tighter text-(--foreground)"> */}
+						<h1 className="hero-title max-w-[12ch] text-balance text-[clamp(2.6rem,5vw,4.8rem)] font-semibold leading-none tracking-tighter text-(--foreground)">
+							{/* <h1 className="hero-title max-w-[12ch] text-balance text-[clamp(2.2rem,min(4.5vw,7vh),4.8rem)] font-semibold leading-none tracking-tighter text-(--foreground)"> */}
 							20+ Years of <span className="hero-gradient-text">Transforming Lives</span>
 						</h1>
 
