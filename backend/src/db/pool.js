@@ -19,6 +19,7 @@ if (!connectionString) {
 
 export const pool = new Pool({
   connectionString,
+   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
 });
 
 export const query = (text, params = []) => pool.query(text, params);

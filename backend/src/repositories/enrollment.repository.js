@@ -58,7 +58,7 @@ export const findActiveEnrollment = (client, studentId, courseId) =>
     );
 export const verifyEnrollment = async (client, userId, courseId) => {
   const res = await client.query(
-    `SELECT 1 FROM enrollments WHERE student_id = $1 AND course_id = $2 AND status = 'active' OR status = 'completed'`,
+    `SELECT 1 FROM enrollments WHERE student_id = $1 AND course_id = $2 AND (status = 'active' OR status = 'completed')`,
     [userId, courseId]
   );
  

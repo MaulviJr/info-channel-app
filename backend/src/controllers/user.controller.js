@@ -428,9 +428,10 @@ const loginUser = asyncHandler(async (req, res) => {
             refreshTokenExpiresAt
         );
         const options = {
-            httpOnly: true,
-            secure: true,
-        };
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+};
 
         return res.status(200)
         .cookie("AccessToken", accessToken, options)
@@ -569,10 +570,11 @@ const refreshTokenHandler = asyncHandler(async (req, res) => {
             refreshTokenExpiresAt
         );
 
-        const options = {
-            httpOnly: true,
-            secure: true,
-        };
+       const options = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+};
 
         return res.status(200)
         .cookie("AccessToken", accessToken, options)

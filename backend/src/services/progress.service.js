@@ -80,7 +80,8 @@ const completeLecture = async (client, userId, rawLectureId) => {
         return {
             completed:       true,
             courseCompleted: true,
-            certificateId:   certificate.rows[0].id || null,
+            // certificateId:   certificate.rows[0].id || null,
+            certificateId:   null,
             progress,
         };
     }
