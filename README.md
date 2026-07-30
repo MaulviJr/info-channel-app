@@ -20,23 +20,6 @@ A full-stack Learning Management System (LMS) for a training institute, supporti
 - Media (profile pictures) is uploaded to **Cloudinary**.
 - Auth is JWT-based (access + refresh tokens) delivered via **HttpOnly cookies**.
 
-┌─────────────────┐        REST/JSON (axios, cookies)        ┌──────────────────┐
-│  React + Vite    │ ───────────────────────────────────────▶ │  Express.js API   │
-│  (frontend/)      │ ◀─────────────────────────────────────── │  (backend/)        │
-└─────────────────┘                                           └──────────────────┘
-                                                                        │
-                                                                        ▼
-                                                              ┌──────────────────┐
-                                                              │   PostgreSQL      │
-                                                              │ (node-pg-migrate) │
-                                                              └──────────────────┘
-                                                                        │
-                                                                        ▼
-                                                              ┌──────────────────┐
-                                                              │   Cloudinary       │
-                                                              │ (image uploads)    │
-                                                              └──────────────────┘
-
 
 ---
 
